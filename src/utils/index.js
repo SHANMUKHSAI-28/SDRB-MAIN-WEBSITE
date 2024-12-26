@@ -16,7 +16,7 @@ export const navOptions = [
     ] 
   },
   { id: "internships", label: "Internships", path: "https://forms.gle/dXzWDuawyueXHDidA" },
-  { id: "contact-us", label: "Contact Us", path: "https://docs.google.com/forms/d/e/1FAIpQLScj52_62GUDX1FPdBsm-HPuw_CgH9l5RmVxh-ZNuBSIYfoxVA/viewform?usp=sf_link" },
+  { id: "contact-us", label: "Contact Us", path: "/contact" },
   { id: "aboutus", label: "About Us", path: "/aboutus" },
   { id: "Verify", label: "Verify", path: "https://verify.ssbautomations.com/" }, 
 ];
