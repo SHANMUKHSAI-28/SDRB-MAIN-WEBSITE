@@ -109,7 +109,7 @@ export default function AboutUs() {
           >
             <div className="absolute inset-0 bg-primary/10 rounded-3xl transform rotate-3" />
             <img 
-              src="https://firebasestorage.googleapis.com/v0/b/ssb-automations.appspot.com/o/new%20logos%2F2.png?alt=media&token=fd8b38d0-2dca-46df-b408-66f665f43fe8" 
+              src="https://firebasestorage.googleapis.com/v0/b/ssb-automations.appspot.com/o/CompanyLogos%2Flogo-enhanced.jpeg?alt=media&token=6b00a6c1-0a02-414b-85e1-af2536f77900" 
               alt="Company Logo" 
               className="rounded-3xl shadow-2xl relative z-10"
             />

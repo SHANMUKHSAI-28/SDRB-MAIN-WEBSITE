@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="container mx-auto">
         <div className="flex flex-wrap justify-between items-center">
           <div className="w-full lg:w-1/3 text-center lg:text-left">
-            <h3 className="text-lg font-semibold">S S B Automations</h3>
+            <h3 className="text-lg font-semibold">SDRB TECHNOLOGIES</h3>
             <p className="text-sm mt-2">
               Providing the best automation solutions for your business.
             </p>
@@ -25,7 +25,7 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLScj52_62GUDX1FPdBsm-HPuw_CgH9l5RmVxh-ZNuBSIYfoxVA/viewform?usp=sf_link" className="hover:text-gray-400">
+                <a href="/contact" className="hover:text-gray-400">
                   Contact Us
                 </a>
               </li>

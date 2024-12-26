@@ -18,7 +18,7 @@ export const navOptions = [
   { id: "internships", label: "Internships", path: "https://forms.gle/dXzWDuawyueXHDidA" },
   { id: "contact-us", label: "Contact Us", path: "/contact" },
   { id: "aboutus", label: "About Us", path: "/aboutus" },
-  { id: "Verify", label: "Verify", path: "https://verify.ssbautomations.com/" }, 
+  { id: "Verify", label: "Verify", path: "https://verify.sdrbtechnologies.com/" }, 
 ];
 
 export const adminNavOptions = [
