@@ -111,7 +111,7 @@ export default function Navbar() {
         <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex-shrink-0 cursor-pointer">
-              <span className="text-2xl font-semibold text-gray-900">SSB AUTOMATIONS</span>
+              <span className="text-2xl font-semibold text-gray-900"> SDRB Technologies</span>
             </div>
             <NavItems router={router} isAdminView={isAdminView} />
             <div className="flex items-center">

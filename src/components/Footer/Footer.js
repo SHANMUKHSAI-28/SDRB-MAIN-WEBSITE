@@ -57,7 +57,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="mt-8 text-center text-sm text-gray-400">
-          <p>&copy; 2024 SSB Automations. All rights reserved.</p>
+          <p>&copy; 2024 SDRB technologies. All rights reserved.</p>
         </div>
       </div>
     </footer>

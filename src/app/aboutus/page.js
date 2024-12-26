@@ -32,13 +32,13 @@ export default function AboutUs() {
               </div>
               <div>
                 <p className="text-lg mb-6">
-                  Welcome to <strong>SSB Automations</strong>, where innovation meets excellence. Founded by <strong>Sri Datta Shanmukh Sai Yeddu</strong>, our company is dedicated to delivering cutting-edge home automation solutions that enhance the quality of life and bring convenience to your doorstep.
+                  Welcome to <strong> SDRB Technologies</strong>, where innovation meets excellence. Founded by <strong>Sri Datta Shanmukh Sai Yeddu</strong>, our company is dedicated to delivering cutting-edge home automation solutions that enhance the quality of life and bring convenience to your doorstep.
                 </p>
                 <p className="text-lg mb-6">
                   Our mission is to revolutionize the way you interact with your home by providing seamless, efficient, and smart automation systems. We believe in the power of technology to transform everyday living, making homes smarter, safer, and more energy-efficient.
                 </p>
                 <p className="text-lg mb-6">
-                  At SSB Automations, our team comprises highly skilled professionals who are passionate about innovation and committed to excellence. We work tirelessly to stay ahead of the curve, ensuring that our solutions are not only current but also future-proof.
+                  At SDRB Technologies, our team comprises highly skilled professionals who are passionate about innovation and committed to excellence. We work tirelessly to stay ahead of the curve, ensuring that our solutions are not only current but also future-proof.
                 </p>
                 <p className="text-lg mb-6">
                   Whether you're looking to automate your lighting, security, or entire home ecosystem, we have the expertise and technology to make it happen. We take pride in our customer-centric approach, tailoring our services to meet the unique needs of each client.
@@ -53,17 +53,12 @@ export default function AboutUs() {
             <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
               <TeamMember 
                 name="SRI DATTA SHANMUKH SAI YEDDU"
-                role="Chief Executive Officer (CEO)"
-                imageUrl="https://via.placeholder.com/150"
-              />
-              <TeamMember 
-                name="Ramu Singamsetty"
-                role="Chief Technology Officer (CTO)"
+                role="Founder / Chief Executive Officer (CEO)"
                 imageUrl="https://via.placeholder.com/150"
               />
               <TeamMember 
                 name="Benny Samuel"
-                role="Lead Software Engineer"
+                role="Co-Founder"
                 imageUrl="https://via.placeholder.com/150"
               />
               

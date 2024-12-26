@@ -11,8 +11,8 @@ import InternshipsPage from './admin-view/internships/page';
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'SSB Automations | Best Home Automations Company',
-  description: 'Your Space, Upgraded',
+  title: 'SDRB TECHNOLOGIES | Best Home Automations Company',
+  description: 'Your Tech, Upgraded',
 }
 
 export default function RootLayout({ children }) {

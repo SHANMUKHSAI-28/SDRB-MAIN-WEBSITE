@@ -25,7 +25,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative flex flex-col items-center text-center p-12 bg-cover bg-center bg-hero-pattern rounded-lg shadow-lg">
       <h1 className="text-6xl font-extrabold text-primaryText font-sans">
-  🚀 SSB Automations
+  🚀 SDRB Technologies
 </h1>
 <p className="text-lg font-semibold text-secondaryText font-sans">
   Leading Solutions in Embedded Systems, AI, and More!
@@ -119,7 +119,7 @@ export default function Home() {
           {[
             {
               name: "John Doe",
-              feedback: "SSB Automations delivered exceptional quality and service!",
+              feedback: " SDRB Technologies delivered exceptional quality and service!",
             },
             {
               name: "Jane Smith",

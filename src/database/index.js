@@ -10,7 +10,7 @@ const connectToDB = async () => {
 
   mongoose
     .connect(connectionUrl, configOptions)
-    .then(() => console.log("SSB-Automations database connected successfully!"))
+    .then(() => console.log("SDRB Technologies database connected successfully!"))
     .catch((err) =>
       console.log(`Getting Error from DB connection ${err.message}`)
     );
