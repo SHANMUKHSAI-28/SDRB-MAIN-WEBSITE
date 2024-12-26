@@ -1,161 +1,188 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getAllAdminProducts } from "@/services/product";
-import ContactUs from "../components/contact/contact";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import { ThermometerSun, Lock, Wifi, Video, BatteryCharging, Smartphone } from "lucide-react";
 
-export default function Home() {
-  const [products, setProducts] = useState([]);
-  const router = useRouter();
-
-  async function getListOfProducts() {
-    const res = await getAllAdminProducts();
-    if (res.success) {
-      setProducts(res.data);
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut"
     }
   }
+};
 
-  useEffect(() => {
-    getListOfProducts();
-  }, []);
+const stagger = {
+  visible: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const features = [
+  {
+    icon: <ThermometerSun className="w-8 h-8" />,
+    title: "Climate Control",
+    description: "Smart temperature management for optimal comfort"
+  },
+  {
+    icon: <Lock className="w-8 h-8" />,
+    title: "Security",
+    description: "Advanced security systems for peace of mind"
+  },
+  {
+    icon: <Wifi className="w-8 h-8" />,
+    title: "Smart Connectivity",
+    description: "Seamless integration of all your devices"
+  },
+  {
+    icon: <Video className="w-8 h-8" />,
+    title: "Video Surveillance",
+    description: "24/7 monitoring and smart alerts"
+  },
+  {
+    icon: <BatteryCharging className="w-8 h-8" />,
+    title: "Energy Management",
+    description: "Optimize energy consumption and reduce costs"
+  },
+  {
+    icon: <Smartphone className="w-8 h-8" />,
+    title: "Mobile Control",
+    description: "Control your home from anywhere"
+  }
+];
+
+const stats = [
+  { number: "1000+", label: "Homes Automated" },
+  { number: "98%", label: "Customer Satisfaction" },
+  { number: "24/7", label: "Support Available" }
+];
+
+export default function Home() {
+  const router = useRouter();
+  const [heroRef, heroInView] = useInView({ triggerOnce: true });
+  const [featuresRef, featuresInView] = useInView({ triggerOnce: true });
+  const [statsRef, statsInView] = useInView({ triggerOnce: true });
+  const [ctaRef, ctaInView] = useInView({ triggerOnce: true });
 
   return (
-    <main className="flex flex-col min-h-screen bg-white p-8">
+    <main className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center text-center p-12 bg-cover bg-center bg-hero-pattern rounded-lg shadow-lg">
-      <h1 className="text-6xl font-extrabold text-primaryText font-sans">
-  🚀 SDRB Technologies
-</h1>
-<p className="text-lg font-semibold text-secondaryText font-sans">
-  Leading Solutions in Embedded Systems, AI, and More!
-</p>
-
-
-
-        <button
-          className="bg-blue-600 hover:bg-blue-800 px-8 py-4 text-lg font-bold uppercase text-white rounded-lg shadow-md"
-          onClick={() => router.push("/contact")}
-        >
-          Get In Touch
-        </button>
-      </section>
-
-      {/* Technologies & Services Section */}
-      <section className="py-12">
-  <h2 className="text-4xl font-bold text-center mb-10">💻 Our Expertise</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {[
-      {
-        title: "Embedded Systems",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Embedded_system_board.jpg/1024px-Embedded_system_board.jpg",
-      },
-      {
-        title: "VLSI",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/3/3c/VLSI_Chip.jpg",
-      },
-      {
-        title: "App Development",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Android_Studio_icon.svg/1024px-Android_Studio_icon.svg.png",
-      },
-      {
-        title: "IoT Solutions",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/IoT_Internet_of_Things.jpg/1024px-IoT_Internet_of_Things.jpg",
-      },
-      {
-        title: "Web Development",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/HTML5_logo_and_wordmark.svg/1024px-HTML5_logo_and_wordmark.svg.png",
-      },
-      {
-        title: "AI & ML",
-        icon: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Artificial_intelligence_%26_machine_learning.jpg",
-      },
-    ].map((service, index) => (
-      <div
-        key={index}
-        className="p-6 bg-gray-100 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center space-x-4"
+      <motion.section
+        ref={heroRef}
+        initial="hidden"
+        animate={heroInView ? "visible" : "hidden"}
+        variants={fadeIn}
+        className="relative h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 text-white overflow-hidden"
       >
-        <img
-          src={service.icon}
-          alt={service.title}
-          className="w-16 h-16 object-cover rounded-md"
-        />
-        <h3 className="text-2xl font-semibold text-gray-800">{service.title}</h3>
-      </div>
-    ))}
-  </div>
-</section>
-
-
-      {/* Featured Products Carousel */}
-      {products && products.length > 0 && (
-        <section className="py-12 bg-blue-50 rounded-lg">
-          <h2 className="text-4xl font-bold text-center mb-8">🛒 Featured Products</h2>
-          <div className="carousel">
-            <div className="flex overflow-x-scroll gap-6">
-              {products.slice(0, 5).map((product) => (
-                <div
-                  key={product._id}
-                  className="min-w-[300px] p-4 bg-white rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
-                >
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
-                  />
-                  <h3 className="text-lg font-semibold text-gray-800">{product.name}</h3>
-                  <p className="text-sm text-gray-600">₹{product.price}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Testimonials Section */}
-      <section className="py-12">
-        <h2 className="text-4xl font-bold text-center mb-8">⭐ Client Testimonials</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[
-            {
-              name: "John Doe",
-              feedback: " SDRB Technologies delivered exceptional quality and service!",
-            },
-            {
-              name: "Jane Smith",
-              feedback: "Their IoT solutions transformed our business operations!",
-            },
-            {
-              name: "Sam Wilson",
-              feedback: "Top-notch expertise in AI and Embedded Systems.",
-            },
-          ].map((testimonial, index) => (
-            <div
-              key={index}
-              className="p-6 bg-gray-100 rounded-lg shadow-lg hover:shadow-xl transition-all"
-            >
-              <p className="text-lg text-gray-700 mb-4">"{testimonial.feedback}"</p>
-              <h4 className="text-xl font-bold text-gray-800">- {testimonial.name}</h4>
-            </div>
-          ))}
+        <div className="absolute inset-0 bg-black opacity-50" />
+        <div className="relative z-10 text-center max-w-4xl mx-auto px-4">
+          <motion.h1
+            variants={fadeIn}
+            className="text-6xl md:text-7xl font-bold mb-6"
+          >
+            Smart Living, Simplified
+          </motion.h1>
+          <motion.p
+            variants={fadeIn}
+            className="text-xl md:text-2xl mb-8 text-gray-200"
+          >
+            Transform your home into an intelligent ecosystem with our cutting-edge automation solutions
+          </motion.p>
+          <motion.button
+            variants={fadeIn}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-white text-blue-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-opacity-90 transition-all"
+            onClick={() => router.push("/contact")}
+          >
+            Get Started Today
+          </motion.button>
         </div>
-      </section>
+      </motion.section>
 
-      {/* Call-to-Action Banner */}
-      <section className="relative flex items-center justify-center py-12 bg-cover bg-cta-pattern rounded-lg shadow-lg">
-        <h2 className="text-3xl font-extrabold text-white mb-6">
-          Ready to Elevate Your Project?
-        </h2>
-        <button
-          className="bg-black hover:bg-gray-800 px-10 py-4 text-lg font-bold uppercase text-white rounded-lg shadow-md"
-          onClick={() => router.push("/contact")}
-        >
-          Contact Us Now
-        </button>
-      </section>
+      {/* Features Section */}
+      <motion.section
+        ref={featuresRef}
+        initial="hidden"
+        animate={featuresInView ? "visible" : "hidden"}
+        variants={stagger}
+        className="py-20 px-4 bg-white"
+      >
+        <div className="max-w-7xl mx-auto">
+          <motion.h2
+            variants={fadeIn}
+            className="text-4xl font-bold text-center mb-16"
+          >
+            Intelligent Features for Modern Living
+          </motion.h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                variants={fadeIn}
+                className="bg-gray-50 p-8 rounded-2xl hover:shadow-lg transition-all"
+              >
+                <div className="bg-blue-100 p-3 rounded-full w-fit mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
 
-      {/* Contact Section */}
-      <ContactUs />
+      {/* Stats Section */}
+      <motion.section
+        ref={statsRef}
+        initial="hidden"
+        animate={statsInView ? "visible" : "hidden"}
+        variants={stagger}
+        className="py-20 bg-blue-600 text-white"
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            {stats.map((stat, index) => (
+              <motion.div key={index} variants={fadeIn}>
+                <h3 className="text-4xl font-bold mb-2">{stat.number}</h3>
+                <p className="text-xl text-blue-100">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.section>
+
+      {/* CTA Section */}
+      <motion.section
+        ref={ctaRef}
+        initial="hidden"
+        animate={ctaInView ? "visible" : "hidden"}
+        variants={fadeIn}
+        className="py-20 px-4 bg-gray-50"
+      >
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold mb-6">Ready to Transform Your Home?</h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Join thousands of satisfied homeowners who have embraced the future of living
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-700 transition-all"
+            onClick={() => router.push("/contact")}
+          >
+            Schedule a Consultation
+          </motion.button>
+        </div>
+      </motion.section>
     </main>
   );
 }
