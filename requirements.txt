@@ -6,3 +6,4 @@ npm i @vercel/analytics
 npm i @vercel/speed-insights
 npm install framer-motion
 npm install react react-dom next framer-motion lucide-react @radix-ui/react-button @radix-ui/react-card tailwindcss postcss autoprefixer eslint prettier eslint-config-prettier eslint-plugin-react react-icons
+npm install @react-three/fiber @react-three/drei
