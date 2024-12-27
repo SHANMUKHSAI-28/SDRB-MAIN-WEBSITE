@@ -132,7 +132,7 @@ export default function AboutUs() {
           <TeamMember 
             name="SRI DATTA SHANMUKH SAI YEDDU"
             role="Founder / Chief Executive Officer (CEO)"
-            imageUrl=""
+            imageUrl="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQG0gd0YaiZj0bAdNu2OBPTD3jHAilnh6PYFrnGXxlLt3x-Nee_BjlfZGc&s"
           />
           <TeamMember 
             name="Benny Samuel"
