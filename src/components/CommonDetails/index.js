@@ -72,23 +72,35 @@ export default function CommonDetails({ item }) {
 
                 {/* Action Buttons */}
                 <div className="flex gap-4">
-                  <button
-                    onClick={() => handleAddToCart(item)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-[#FF9F00] hover:bg-[#F39000] px-6 py-4 text-white rounded-lg font-medium transition-colors duration-200"
-                  >
-                    {componentLevelLoader && componentLevelLoader.loading ? (
-                      <ComponentLevelLoader text={'Adding to Cart'} color={'#ffffff'} loading={componentLevelLoader?.loading} />
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-5 h-5" />
-                        <span>ADD TO CART</span>
-                      </>
-                    )}
-                  </button>
-                  <button className="flex-1 flex items-center justify-center bg-[#FB641B] hover:bg-[#E85D19] px-6 py-4 text-white rounded-lg font-medium transition-colors duration-200">
-                    <span>BUY NOW</span>
-                  </button>
-                </div>
+  <button
+    onClick={() => handleAddToCart(item)}
+    className="flex-1 flex items-center justify-center gap-2 bg-[#FF9F00] hover:bg-[#F39000] px-6 py-4 text-white rounded-lg font-medium transition-colors duration-200"
+  >
+    {componentLevelLoader && componentLevelLoader.loading ? (
+      <ComponentLevelLoader text={'Adding to Cart'} color={'#ffffff'} loading={componentLevelLoader?.loading} />
+    ) : (
+      <>
+        <ShoppingBag className="w-5 h-5" />
+        <span>ADD TO CART</span>
+      </>
+    )}
+  </button>
+  <button
+    onClick={() => {
+      handleAddToCart(item); // Add to cart
+      // Navigate to checkout or perform the "BUY NOW" action
+      navigateToCheckout(); // Replace this with your actual navigation or logic
+    }}
+    className="flex-1 flex items-center justify-center bg-[#FB641B] hover:bg-[#E85D19] px-6 py-4 text-white rounded-lg font-medium transition-colors duration-200"
+  >
+    {componentLevelLoader && componentLevelLoader.loading ? (
+      <ComponentLevelLoader text={'Processing'} color={'#ffffff'} loading={componentLevelLoader?.loading} />
+    ) : (
+      <span>BUY NOW</span>
+    )}
+  </button>
+</div>
+
               </div>
             </div>
           </div>
