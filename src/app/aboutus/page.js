@@ -132,7 +132,7 @@ export default function AboutUs() {
           <TeamMember 
             name="SRI DATTA SHANMUKH SAI YEDDU"
             role="Founder / Chief Executive Officer (CEO)"
-            imageUrl="https://media.licdn.com/dms/image/D5603AQFfBkaWyqZiSg/profile-displayphoto-shrink_200_200/0/1720497356757?e=2147483647&v=beta&t=XVcm0SmdjsyqHQBKE-jEb7FtvnpqkzP3mW3MNRgzfCM"
+            imageUrl=""
           />
           <TeamMember 
             name="Benny Samuel"
