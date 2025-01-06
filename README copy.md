@@ -73,7 +73,7 @@ encoding==0.1.13
 ## incode package.json
 
 {
-  "name": "ssb-automations",
+  "name": "sdrb-technologies",
   "version": "0.1.0",
   "private": true,
   "scripts": {

@@ -143,7 +143,7 @@ export default function AboutUs() {
       <p className="text-lg text-muted-foreground leading-relaxed">
         <strong>SDRB Technologies</strong>
         <br />
-        SSB Automations,
+        sdrb-technologies,
         <br />
         Main Road, Patamata,
         <br />
