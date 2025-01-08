@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import AuthUser from "@/middleware/AuthUser";
 
 const razorpayInstance = new Razorpay({
-  key_id: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay Key ID
-  key_secret: "02iADMTpuOGFzwbiTO5kjVZ5", // Replace with your Razorpay Secret Key
+  key_id: "rzp_test_YNiLz4wMTURtjU",
+  key_secret: "02iADMTpuOGFzwbiTO5kjVZ5",
 });
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function POST(req) {
     const { amount, currency } = body;
 
     const orderOptions = {
-      amount, // Amount in paise (e.g., 100 INR = 10000)
+      amount: amount * 100, // Convert to paise
       currency,
       receipt: `order_rcptid_${Date.now()}`,
     };
