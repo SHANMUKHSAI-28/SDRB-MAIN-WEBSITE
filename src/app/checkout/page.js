@@ -4,6 +4,7 @@ import { GlobalContext } from "@/context";
 import { fetchAllAddresses } from "@/services/address";
 import { createNewOrder } from "@/services/order";
 import { callStripeSession } from "@/services/stripe";
+import { createRazorpayOrder } from "@/services/razorpay"; // Razorpay service
 import { loadStripe } from "@stripe/stripe-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
@@ -31,11 +32,8 @@ export default function Checkout() {
     "pk_test_51OPFRtSJA9GAEIjE6wRcmZj7YuO4g0Md53AhigtPWcLzPDQte5QeVeTZaSGlJEuV9vKMoaLjCSRg6PH1oCwcuOPR00TqPDos3Y";
   const stripePromise = loadStripe(publishableKey);
 
-  console.log(cartItems);
-
   async function getAllAddresses() {
     const res = await fetchAllAddresses(user?._id);
-
     if (res.success) {
       setAddresses(res.data);
     }
@@ -47,10 +45,10 @@ export default function Checkout() {
 
   useEffect(() => {
     async function createFinalOrder() {
-      const isStripe = JSON.parse(localStorage.getItem("stripe"));
+      const paymentMethod = localStorage.getItem("paymentMethod");
+      const isStripe = paymentMethod === "Stripe";
 
       if (
-        isStripe &&
         params.get("status") === "success" &&
         cartItems &&
         cartItems.length > 0
@@ -67,14 +65,14 @@ export default function Checkout() {
             qty: 1,
             product: item.productID,
           })),
-          paymentMethod: "Stripe",
+          paymentMethod,
           totalPrice: cartItems.reduce(
             (total, item) => item.productID.price + total,
             0
           ),
-          isPaid: true,
+          isPaid: isStripe,
           isProcessing: true,
-          paidAt: new Date(),
+          paidAt: isStripe ? new Date() : null,
         };
 
         const res = await createNewOrder(createFinalCheckoutFormData);
@@ -124,8 +122,7 @@ export default function Checkout() {
   }
 
   async function handleCheckout() {
-    const stripe = await stripePromise;
-
+    const paymentMethod = localStorage.getItem("paymentMethod");
     const createLineItems = cartItems.map((item) => ({
       price_data: {
         currency: "INR",
@@ -138,26 +135,54 @@ export default function Checkout() {
       quantity: 1,
     }));
 
-    const res = await callStripeSession(createLineItems);
-    setIsOrderProcessing(true);
-    localStorage.setItem("stripe", true);
-    localStorage.setItem("checkoutFormData", JSON.stringify(checkoutFormData));
+    if (paymentMethod === "Stripe") {
+      const stripe = await stripePromise;
+      const res = await callStripeSession(createLineItems);
+      setIsOrderProcessing(true);
+      localStorage.setItem("checkoutFormData", JSON.stringify(checkoutFormData));
+      const { error } = await stripe.redirectToCheckout({
+        sessionId: res.id,
+      });
+      if (error) console.log(error);
+    } else if (paymentMethod === "Razorpay") {
+      const totalPrice = cartItems.reduce(
+        (total, item) => item.productID.price + total,
+        0
+      );
+      const res = await createRazorpayOrder({
+        amount: totalPrice * 100,
+        currency: "INR",
+      });
 
-    const { error } = await stripe.redirectToCheckout({
-      sessionId: res.id,
-    });
+      const options = {
+        key: "your_razorpay_key_id",
+        amount: res.order.amount,
+        currency: res.order.currency,
+        name: "Your Company",
+        description: "Order Payment",
+        order_id: res.order.id,
+        handler: async function (response) {
+          toast.success("Payment successful!", {
+            position: toast.POSITION.TOP_RIGHT,
+          });
+          setOrderSuccess(true);
+        },
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+        },
+      };
 
-    console.log(error);
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    }
   }
-
-  console.log(checkoutFormData);
 
   useEffect(() => {
     if (orderSuccess) {
       setTimeout(() => {
-        // setOrderSuccess(false);
         router.push("/orders");
-      }, [2000]);
+      }, 2000);
     }
   }, [orderSuccess]);
 
@@ -276,7 +301,7 @@ export default function Checkout() {
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-black">Shipping</p>
-              <p className                ="text-lg font-bold text-black">Free</p>
+              <p className="text-lg font-bold text-black">Free</p>
             </div>
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-black">Total</p>
@@ -290,23 +315,29 @@ export default function Checkout() {
                   : "0"}
               </p>
             </div>
-            <div className="pb-10">
-              <button
-                disabled={
-                  (cartItems && cartItems.length === 0) ||
-                  Object.keys(checkoutFormData.shippingAddress).length === 0
-                }
-                onClick={handleCheckout}
-                className="disabled:opacity-50 mt-5 mr-5 w-full inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
-              >
-                Checkout
-              </button>
-            </div>
+          </div>
+          <div className="flex justify-between">
+            <button
+              className="mt-4 mb-8 w-full rounded-md bg-black px-6 py-3 font-medium text-white"
+              onClick={() => {
+                localStorage.setItem("paymentMethod", "Stripe");
+                handleCheckout();
+              }}
+            >
+              Pay with Stripe
+            </button>
+            <button
+              className="mt-4 mb-8 w-full rounded-md bg-green-500 px-6 py-3 font-medium text-white"
+              onClick={() => {
+                localStorage.setItem("paymentMethod", "Razorpay");
+                handleCheckout();
+              }}
+            >
+              Pay with Razorpay
+            </button>
           </div>
         </div>
       </div>
-      <Notification />
     </div>
   );
 }
-
