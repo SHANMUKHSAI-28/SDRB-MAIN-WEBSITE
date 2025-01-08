@@ -1,32 +1,35 @@
-import Razorpay from 'razorpay';
+import Razorpay from "razorpay";
+import { NextResponse } from "next/server";
+import AuthUser from "@/middleware/AuthUser";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_YNiLz4wMTURtjU',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '02iADMTpuOGFzwbiTO5kjVZ5',
+const razorpayInstance = new Razorpay({
+  key_id: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay Key ID
+  key_secret: "02iADMTpuOGFzwbiTO5kjVZ5", // Replace with your Razorpay Secret Key
 });
 
-export async function POST(req, res) {
-  try {
-    // Parse the request body
-    const body = await req.json();
-    const { amount, currency = "INR", receipt } = body;
+export const dynamic = "force-dynamic";
 
-    if (!amount || !receipt) {
-      return res.status(400).json({ error: "Missing required fields: amount, receipt" });
+export async function POST(req) {
+  try {
+    const isAuthUser = await AuthUser(req);
+    if (!isAuthUser) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const options = {
-      amount: Math.round(amount), // Amount in smallest currency unit
+    const body = await req.json();
+    const { amount, currency } = body;
+
+    const orderOptions = {
+      amount, // Amount in paise (e.g., 100 INR = 10000)
       currency,
-      receipt,
+      receipt: `order_rcptid_${Date.now()}`,
     };
 
-    // Create Razorpay order
-    const order = await razorpay.orders.create(options);
+    const order = await razorpayInstance.orders.create(orderOptions);
 
-    return res.status(200).json(order);
+    return NextResponse.json({ success: true, order });
   } catch (error) {
-    console.error("Razorpay Order Creation Error:", error.message);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("Error creating Razorpay order:", error);
+    return NextResponse.json({ success: false, message: "Internal Server Error" }, { status: 500 });
   }
 }
