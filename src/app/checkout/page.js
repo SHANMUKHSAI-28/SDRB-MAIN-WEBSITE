@@ -1,4 +1,5 @@
 "use client";
+
 import Notification from "@/components/Notification";
 import { GlobalContext } from "@/context";
 import { fetchAllAddresses } from "@/services/address";
@@ -27,19 +28,19 @@ export default function Checkout() {
   const router = useRouter();
   const params = useSearchParams();
 
-  const publishableKey =
-    "pk_test_51OPFRtSJA9GAEIjE6wRcmZj7YuO4g0Md53AhigtPWcLzPDQte5QeVeTZaSGlJEuV9vKMoaLjCSRg6PH1oCwcuOPR00TqPDos3Y";
-  const stripePromise = loadStripe(publishableKey);
+  const stripePromise = loadStripe(
+    "pk_test_51OPFRtSJA9GAEIjE6wRcmZj7YuO4g0Md53AhigtPWcLzPDQte5QeVeTZaSGlJEuV9vKMoaLjCSRg6PH1oCwcuOPR00TqPDos3Y"
+  );
 
-  async function getAllAddresses() {
-    const res = await fetchAllAddresses(user?._id);
-    if (res.success) {
-      setAddresses(res.data);
-    }
-  }
+  const subtotal = cartItems.reduce(
+    (total, item) => item.productID.price + total,
+    0
+  );
 
   useEffect(() => {
-    if (user) getAllAddresses();
+    if (user) fetchAllAddresses(user._id).then((res) => {
+      if (res.success) setAddresses(res.data);
+    });
   }, [user]);
 
   useEffect(() => {
@@ -49,173 +50,130 @@ export default function Checkout() {
 
       if (
         params.get("status") === "success" &&
-        cartItems &&
         cartItems.length > 0
       ) {
         setIsOrderProcessing(true);
-        const getCheckoutFormData = JSON.parse(
-          localStorage.getItem("checkoutFormData")
-        );
+        const savedFormData = JSON.parse(localStorage.getItem("checkoutFormData"));
 
-        const createFinalCheckoutFormData = {
-          user: user?._id,
-          shippingAddress: getCheckoutFormData.shippingAddress,
+        const orderData = {
+          user: user._id,
+          shippingAddress: savedFormData.shippingAddress,
           orderItems: cartItems.map((item) => ({
             qty: 1,
             product: item.productID,
           })),
           paymentMethod,
-          totalPrice: cartItems.reduce(
-            (total, item) => item.productID.price + total,
-            0
-          ),
+          totalPrice: subtotal,
           isPaid: isStripe,
           isProcessing: true,
           paidAt: isStripe ? new Date() : null,
         };
 
-        const res = await createNewOrder(createFinalCheckoutFormData);
-
+        const res = await createNewOrder(orderData);
+        setIsOrderProcessing(false);
         if (res.success) {
-          setIsOrderProcessing(false);
           setOrderSuccess(true);
-          toast.success(res.message, {
-            position: toast.POSITION.TOP_RIGHT,
-          });
+          toast.success(res.message, { position: toast.POSITION.TOP_RIGHT });
         } else {
-          setIsOrderProcessing(false);
-          setOrderSuccess(false);
-          toast.error(res.message, {
-            position: toast.POSITION.TOP_RIGHT,
-          });
+          toast.error(res.message, { position: toast.POSITION.TOP_RIGHT });
         }
       }
     }
 
     createFinalOrder();
-  }, [params.get("status"), cartItems]);
+  }, [params, cartItems]);
 
-  function handleSelectedAddress(getAddress) {
-    if (getAddress._id === selectedAddress) {
-      setSelectedAddress(null);
-      setCheckoutFormData({
-        ...checkoutFormData,
-        shippingAddress: {},
-      });
-      return;
-    }
-
-    setSelectedAddress(getAddress._id);
+  const handleSelectedAddress = (address) => {
+    const isSame = address._id === selectedAddress;
+    setSelectedAddress(isSame ? null : address._id);
     setCheckoutFormData({
       ...checkoutFormData,
-      shippingAddress: {
-        ...checkoutFormData.shippingAddress,
-        fullName: getAddress.fullName,
-        city: getAddress.city,
-        country: getAddress.country,
-        postalCode: getAddress.postalCode,
-        address: getAddress.address,
-      },
+      shippingAddress: isSame
+        ? {}
+        : {
+            fullName: address.fullName,
+            city: address.city,
+            country: address.country,
+            postalCode: address.postalCode,
+            address: address.address,
+          },
     });
-  }
+  };
 
-  async function handleCheckout() {
+  const handleCheckout = async () => {
     const paymentMethod = localStorage.getItem("paymentMethod");
-    const createLineItems = cartItems.map((item) => ({
-      price_data: {
-        currency: "INR",
-        product_data: {
-          images: [item.productID.imageUrl],
-          name: item.productID.name,
-        },
-        unit_amount: item.productID.price * 100,
-      },
-      quantity: 1,
-    }));
+    localStorage.setItem("checkoutFormData", JSON.stringify(checkoutFormData));
 
     if (paymentMethod === "Stripe") {
       const stripe = await stripePromise;
-      const res = await callStripeSession(createLineItems);
-      setIsOrderProcessing(true);
-      localStorage.setItem("checkoutFormData", JSON.stringify(checkoutFormData));
-      const { error } = await stripe.redirectToCheckout({
-        sessionId: res.id,
-      });
-      if (error) console.log(error);
-    } else if (paymentMethod === "Razorpay") {
-      const totalPrice = cartItems.reduce(
-        (total, item) => item.productID.price + total,
-        0
+      const res = await callStripeSession(
+        cartItems.map((item) => ({
+          price_data: {
+            currency: "INR",
+            product_data: {
+              images: [item.productID.imageUrl],
+              name: item.productID.name,
+            },
+            unit_amount: item.productID.price * 100,
+          },
+          quantity: 1,
+        }))
       );
 
+      setIsOrderProcessing(true);
+      const { error } = await stripe.redirectToCheckout({ sessionId: res.id });
+      if (error) console.error(error);
+    } else if (paymentMethod === "Razorpay") {
       try {
         const res = await fetch("/api/razorpay", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ amount: totalPrice * 100, currency: "INR" }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: subtotal, currency: "INR" }),
         });
 
         const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to initiate payment");
 
-        if (data.error) {
-          toast.error(data.error, {
-            position: toast.POSITION.TOP_RIGHT,
-          });
-          return;
-        }
-
-        const options = {
+        const razorpay = new window.Razorpay({
           key: "rzp_test_YNiLz4wMTURtjU",
           amount: data.amount,
           currency: data.currency,
           name: "Your Company",
           description: "Order Payment",
           order_id: data.id,
-          handler: function (response) {
+          handler: () => {
             toast.success("Payment successful!", {
               position: toast.POSITION.TOP_RIGHT,
             });
             setOrderSuccess(true);
           },
-          prefill: {
-            name: user?.name,
-            email: user?.email,
-          },
-        };
+          prefill: { name: user.name, email: user.email },
+        });
 
-        const razorpay = new window.Razorpay(options);
         razorpay.open();
       } catch (error) {
-        toast.error("Payment initiation failed.", {
+        toast.error("Payment initiation failed!", {
           position: toast.POSITION.TOP_RIGHT,
         });
         console.error(error);
       }
     }
-  }
+  };
 
   useEffect(() => {
     if (orderSuccess) {
-      setTimeout(() => {
-        router.push("/orders");
-      }, 2000);
+      setTimeout(() => router.push("/orders"), 2000);
     }
   }, [orderSuccess]);
 
   if (orderSuccess) {
     return (
       <section className="h-screen bg-gray-200">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto mt-8 max-w-screen-xl px-4 sm:px-6 lg:px-8">
-            <div className="bg-white shadow">
-              <div className="px-4 py-6 sm:px-8 sm:py-10 flex flex-col gap-5">
-                <h1 className="font-bold text-lg text-black">
-                  Your payment is successful and you will be redirected to the orders page in 2 seconds!
-                </h1>
-              </div>
-            </div>
+        <div className="mx-auto max-w-screen-xl px-4 py-10">
+          <div className="bg-white shadow px-6 py-8 text-center">
+            <h1 className="text-xl font-bold text-black">
+              Payment successful! Redirecting to your orders in 2 seconds...
+            </h1>
           </div>
         </div>
       </section>
@@ -224,136 +182,100 @@ export default function Checkout() {
 
   if (isOrderProcessing) {
     return (
-      <div className="w-full min-h-screen flex justify-center items-center">
-        <PulseLoader
-          color={"#000000"}
-          loading={isOrderProcessing}
-          size={30}
-          data-testid="loader"
-        />
+      <div className="flex items-center justify-center min-h-screen">
+        <PulseLoader color="#000" loading size={30} />
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="grid sm:px-10 lg:grid-cols-2 lg:px-20 xl:px-32">
-        <div className="px-4 pt-8">
-          <p className="font-medium text-xl text-black">Cart Summary</p>
-          <div className="mt-8 space-y-3 rounded-lg border bg-white px-2 py-4 sm:px-5">
-            {cartItems && cartItems.length ? (
-              cartItems.map((item) => (
-                <div
-                  className="flex flex-col rounded-lg bg-white sm:flex-row"
-                  key={item._id}
-                >
-                  <img
-                    src={item?.productID?.imageUrl}
-                    alt="Cart Item"
-                    className="m-2 h-24 w-28 rounded-md border object-cover object-center"
-                  />
-                  <div className="flex w-full flex-col px-4 py-4">
-                    <span className="font-bold text-black">
-                      {item?.productID?.name}
-                    </span>
-                    <span className="font-semibold text-black">
-                      ₹{item?.productID?.price}
-                    </span>
-                  </div>
+    <div className="grid sm:px-10 lg:grid-cols-2 lg:px-20 xl:px-32">
+      <div className="px-4 pt-8">
+        <h2 className="font-medium text-xl text-black">Cart Summary</h2>
+        <div className="mt-8 space-y-3 rounded-lg border bg-white px-4 py-6">
+          {cartItems.length ? (
+            cartItems.map((item) => (
+              <div className="flex items-center space-x-4" key={item._id}>
+                <img
+                  src={item.productID.imageUrl}
+                  alt="Cart Item"
+                  className="h-20 w-20 rounded-lg object-cover"
+                />
+                <div>
+                  <p className="font-semibold text-black">
+                    {item.productID.name}
+                  </p>
+                  <p className="font-bold text-black">₹{item.productID.price}</p>
                 </div>
-              ))
-            ) : (
-              <div className="text-black">Your cart is empty</div>
-            )}
-          </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-black">Your cart is empty</p>
+          )}
         </div>
-        <div className="mt-10 bg-gray-50 px-4 pt-8 lg:mt-0">
-          <p className="text-xl font-medium text-black">Shipping Address Details</p>
-          <p className="text-gray-400 font-bold text-black">
-            Complete your order by selecting an address below
-          </p>
-          <div className="w-full mt-6 mr-0 mb-0 ml-0 space-y-6">
-            {addresses && addresses.length ? (
-              addresses.map((item) => (
-                <div
-                  onClick={() => handleSelectedAddress(item)}
-                  key={item._id}
-                  className={`border p-6 ${
-                    item._id === selectedAddress ? "border-red-900" : ""
-                  }`}
-                >
-                  <p className="text-black">Name: {item.fullName}</p>
-                  <p className="text-black">Address: {item.address}</p>
-                  <p className="text-black">City: {item.city}</p>
-                  <p className="text-black">Country: {item.country}</p>
-                  <p className="text-black">Postal Code: {item.postalCode}</p>
-                  <button className="mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide">
-                    {item._id === selectedAddress
-                      ? "Selected Address"
-                      : "Select Address"}
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p className="text-black">No addresses added</p>
-            )}
-          </div>
-          <button
-            onClick={() => router.push("/account")}
-            className="mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
-          >
-            Add New Address
-          </button>
-          <div className="mt-6 border-t border-b py-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-black">Subtotal</p>
-              <p className="text-lg font-bold text-black">
-                ₹
-                {cartItems && cartItems.length
-                  ? cartItems.reduce(
-                      (total, item) => item.productID.price + total,
-                      0
-                    )
-                  : "0"}
-              </p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-black">Shipping</p>
-              <p className="text-lg font-bold text-black">Free</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-black">Total</p>
-              <p className="text-lg font-bold text-black">
-                ₹
-                {cartItems && cartItems.length
-                  ? cartItems.reduce(
-                      (total, item) => item.productID.price + total,
-                      0
-                    )
-                  : "0"}
-              </p>
-            </div>
+      </div>
+      <div className="mt-10 px-4 pt-8 bg-gray-50 lg:mt-0">
+        <h2 className="font-medium text-xl text-black">Shipping Address</h2>
+        <p className="text-gray-400">Select an address below</p>
+        <div className="space-y-4 mt-6">
+          {addresses.length ? (
+            addresses.map((address) => (
+              <div
+                key={address._id}
+                className={`p-4 border rounded-lg cursor-pointer ${
+                  address._id === selectedAddress ? "border-red-600" : ""
+                }`}
+                onClick={() => handleSelectedAddress(address)}
+              >
+                <p className="text-black">{address.fullName}</p>
+                <p className="text-black">{address.address}</p>
+                <p className="text-black">{address.city}, {address.country}</p>
+                <p className="text-black">{address.postalCode}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-black">No addresses available</p>
+          )}
+        </div>
+        <button
+          onClick={() => router.push("/account")}
+          className="mt-4 w-full bg-black text-white py-2 rounded-md"
+        >
+          Add New Address
+        </button>
+        <div className="mt-6 border-t pt-4">
+          <div className="flex justify-between">
+            <p className="text-sm font-medium">Subtotal</p>
+            <p className="text-lg font-bold">₹{subtotal}</p>
           </div>
           <div className="flex justify-between">
-            <button
-              className="mt-4 mb-8 w-full rounded-md bg-black px-6 py-3 font-medium text-white"
-              onClick={() => {
-                localStorage.setItem("paymentMethod", "Stripe");
-                handleCheckout();
-              }}
-            >
-              Pay with Stripe
-            </button>
-            <button
-              className="mt-4 mb-8 w-full rounded-md bg-green-500 px-6 py-3 font-medium text-white"
-              onClick={() => {
-                localStorage.setItem("paymentMethod", "Razorpay");
-                handleCheckout();
-              }}
-            >
-              Pay with Razorpay
-            </button>
+            <p className="text-sm font-medium">Shipping</p>
+            <p className="text-lg font-bold">Free</p>
           </div>
+          <div className="flex justify-between">
+            <p className="text-sm font-medium">Total</p>
+            <p className="text-lg font-bold">₹{subtotal}</p>
+          </div>
+        </div>
+        <div className="mt-4 space-y-2">
+          <button
+            onClick={() => {
+              localStorage.setItem("paymentMethod", "Stripe");
+              handleCheckout();
+            }}
+            className="w-full bg-black text-white py-2 rounded-md"
+          >
+            Pay with Stripe
+          </button>
+          <button
+            onClick={() => {
+              localStorage.setItem("paymentMethod", "Razorpay");
+              handleCheckout();
+            }}
+            className="w-full bg-green-500 text-white py-2 rounded-md"
+          >
+            Pay with Razorpay
+          </button>
         </div>
       </div>
     </div>
