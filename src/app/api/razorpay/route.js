@@ -1,35 +1,30 @@
-import Razorpay from "razorpay";
-import { NextResponse } from "next/server";
-import AuthUser from "@/middleware/AuthUser";
+const express = require("express");
+const Razorpay = require("razorpay");
+const router = express.Router();
 
-const razorpayInstance = new Razorpay({
-  key_id: "rzp_test_YNiLz4wMTURtjU",
-  key_secret: "02iADMTpuOGFzwbiTO5kjVZ5",
+// Initialize Razorpay instance
+const razorpay = new Razorpay({
+  key_id: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay Key ID
+  key_secret: "02iADMTpuOGFzwbiTO5kjVZ5", // Replace with your Razorpay Key Secret
 });
 
-export const dynamic = "force-dynamic";
-
-export async function POST(req) {
+router.post("/razorpay", async (req, res) => {
   try {
-    const isAuthUser = await AuthUser(req);
-    if (!isAuthUser) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-    }
+    const { amount, currency } = req.body;
 
-    const body = await req.json();
-    const { amount, currency } = body;
-
-    const orderOptions = {
-      amount: amount * 100, // Convert to paise
+    const options = {
+      amount, // Amount in paise
       currency,
-      receipt: `order_rcptid_${Date.now()}`,
+      receipt: `receipt_${Math.random().toString(36).substring(7)}`,
     };
 
-    const order = await razorpayInstance.orders.create(orderOptions);
+    const order = await razorpay.orders.create(options);
 
-    return NextResponse.json({ success: true, order });
+    res.status(200).json(order);
   } catch (error) {
-    console.error("Error creating Razorpay order:", error);
-    return NextResponse.json({ success: false, message: "Internal Server Error" }, { status: 500 });
+    console.error(error);
+    res.status(500).json({ error: "Failed to create Razorpay order" });
   }
-}
+});
+
+module.exports = router;
