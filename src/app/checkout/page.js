@@ -172,10 +172,10 @@ export default function Checkout() {
       });
 
       const options = {
-        key: "your_razorpay_key_id",
+        key: "rzp_test_YNiLz4wMTURtjU",
         amount: res.order.amount,
         currency: res.order.currency,
-        name: "Your Company",
+        name: "SDRB TECHNOLOGIES",
         description: "Order Payment",
         order_id: res.order.id,
         handler: async function (response) {
