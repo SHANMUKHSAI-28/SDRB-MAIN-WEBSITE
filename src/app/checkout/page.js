@@ -255,6 +255,7 @@ export default function Checkout() {
   }
 
 
+
   return (
     <div>
       <div className="grid sm:px-10 lg:grid-cols-2 lg:px-20 xl:px-32">
