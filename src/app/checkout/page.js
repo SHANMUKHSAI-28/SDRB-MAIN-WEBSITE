@@ -1,4 +1,5 @@
 "use client";
+
 import Notification from "@/components/Notification";
 import { GlobalContext } from "@/context";
 import { fetchAllAddresses } from "@/services/address";
@@ -120,6 +121,16 @@ export default function Checkout() {
     });
   }
 
+  async function loadRazorpayScript() {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  }
+
   async function handleCheckout() {
     const paymentMethod = localStorage.getItem("paymentMethod");
     const createLineItems = cartItems.map((item) => ({
@@ -144,22 +155,29 @@ export default function Checkout() {
       });
       if (error) console.log(error);
     } else if (paymentMethod === "Razorpay") {
+      const loaded = await loadRazorpayScript();
+
+      if (!loaded) {
+        toast.error("Failed to load Razorpay SDK.");
+        return;
+      }
+
       const totalPrice = cartItems.reduce(
         (total, item) => item.productID.price + total,
         0
       );
-      
+
       try {
-        const res = await fetch('/api/razorpay', {
-          method: 'POST',
+        const res = await fetch("/api/razorpay", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ amount: totalPrice, currency: 'INR' }),
+          body: JSON.stringify({ amount: totalPrice * 100, currency: "INR" }),
         });
 
         const data = await res.json();
-        
+
         if (data.error) {
           toast.error(data.error, {
             position: toast.POSITION.TOP_RIGHT,
@@ -168,7 +186,7 @@ export default function Checkout() {
         }
 
         const options = {
-          key: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay key
+          key: "rzp_test_YNiLz4wMTURtjU",
           amount: data.amount,
           currency: data.currency,
           name: "Your Company",
@@ -235,6 +253,8 @@ export default function Checkout() {
       </div>
     );
   }
+
+
 
   return (
     <div>
