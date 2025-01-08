@@ -1,11 +1,9 @@
 "use client";
-
 import Notification from "@/components/Notification";
 import { GlobalContext } from "@/context";
 import { fetchAllAddresses } from "@/services/address";
 import { createNewOrder } from "@/services/order";
 import { callStripeSession } from "@/services/stripe";
-import { createRazorpayOrder } from "@/services/razorpay";
 import { loadStripe } from "@stripe/stripe-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
@@ -122,16 +120,6 @@ export default function Checkout() {
     });
   }
 
-  async function loadRazorpayScript() {
-    return new Promise((resolve) => {
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  }
-
   async function handleCheckout() {
     const paymentMethod = localStorage.getItem("paymentMethod");
     const createLineItems = cartItems.map((item) => ({
@@ -156,42 +144,56 @@ export default function Checkout() {
       });
       if (error) console.log(error);
     } else if (paymentMethod === "Razorpay") {
-      const loaded = await loadRazorpayScript();
-      if (!loaded) {
-        toast.error("Failed to load Razorpay script.");
-        return;
-      }
-
       const totalPrice = cartItems.reduce(
         (total, item) => item.productID.price + total,
         0
       );
-      const res = await createRazorpayOrder({
-        amount: totalPrice * 100,
-        currency: "INR",
-      });
+      
+      try {
+        const res = await fetch('/api/razorpay', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount: totalPrice, currency: 'INR' }),
+        });
 
-      const options = {
-        key: "rzp_test_YNiLz4wMTURtjU",
-        amount: res.order.amount,
-        currency: res.order.currency,
-        name: "SDRB TECHNOLOGIES",
-        description: "Order Payment",
-        order_id: res.order.id,
-        handler: async function (response) {
-          toast.success("Payment successful!", {
+        const data = await res.json();
+        
+        if (data.error) {
+          toast.error(data.error, {
             position: toast.POSITION.TOP_RIGHT,
           });
-          setOrderSuccess(true);
-        },
-        prefill: {
-          name: user?.name,
-          email: user?.email,
-        },
-      };
+          return;
+        }
 
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
+        const options = {
+          key: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay key
+          amount: data.amount,
+          currency: data.currency,
+          name: "Your Company",
+          description: "Order Payment",
+          order_id: data.id,
+          handler: async function (response) {
+            toast.success("Payment successful!", {
+              position: toast.POSITION.TOP_RIGHT,
+            });
+            setOrderSuccess(true);
+          },
+          prefill: {
+            name: user?.name,
+            email: user?.email,
+          },
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+      } catch (error) {
+        toast.error("Payment initiation failed.", {
+          position: toast.POSITION.TOP_RIGHT,
+        });
+        console.error(error);
+      }
     }
   }
 
@@ -207,12 +209,11 @@ export default function Checkout() {
     return (
       <section className="h-screen bg-gray-200">
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto mt-8 max-w-screen-xl px-4 sm:px-6 lg:px-8 ">
+          <div className="mx-auto mt-8 max-w-screen-xl px-4 sm:px-6 lg:px-8">
             <div className="bg-white shadow">
               <div className="px-4 py-6 sm:px-8 sm:py-10 flex flex-col gap-5">
                 <h1 className="font-bold text-lg text-black">
-                  Your payment is successful and you will be redirected to the
-                  orders page in 2 seconds!
+                  Your payment is successful and you will be redirected to the orders page in 2 seconds!
                 </h1>
               </div>
             </div>
@@ -276,32 +277,84 @@ export default function Checkout() {
             {addresses && addresses.length ? (
               addresses.map((item) => (
                 <div
-                  key={item._id}
                   onClick={() => handleSelectedAddress(item)}
-                  className={`relative flex cursor-pointer justify-start items-center p-4 rounded-lg border-2 ${
-                    selectedAddress === item._id
-                      ? "border-[#233] bg-green-100"
-                      : "border-gray-300 bg-gray-50"
+                  key={item._id}
+                  className={`border p-6 ${
+                    item._id === selectedAddress ? "border-red-900" : ""
                   }`}
                 >
-                  <div className="ml-4">
-                    <p className="text-lg font-semibold">{item.fullName}</p>
-                    <p className="mt-1 text-sm text-black">
-                      {item.address}, {item.city}
-                    </p>
-                  </div>
+                  <p className="text-black">Name : {item.fullName}</p>
+                  <p className="text-black">Address : {item.address}</p>
+                  <p className="text-black">City : {item.city}</p>
+                  <p className="text-black">Country : {item.country}</p>
+                  <p className="text-black">Postal Code : {item.postalCode}</p>
+                  <button className="mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                    {item._id === selectedAddress
+                      ? "Selected Address"
+                      : "Select Address"}
+                  </button>
                 </div>
               ))
             ) : (
-              <p>No addresses available.</p>
+              <p className="text-black">No addresses added</p>
             )}
           </div>
           <button
-            onClick={handleCheckout}
-            className="mt-4 w-full text-white bg-blue-500 py-3 rounded-lg shadow hover:bg-blue-600"
+            onClick={() => router.push("/account")}
+            className="mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
           >
-            Proceed to Checkout
+            Add New Address
           </button>
+          <div className="mt-6 border-t border-b py-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-black">Subtotal</p>
+              <p className="text-lg font-bold text-black">
+                ₹
+                {cartItems && cartItems.length
+                  ? cartItems.reduce(
+                      (total, item) => item.productID.price + total,
+                      0
+                    )
+                  : "0"}
+              </p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-black">Shipping</p>
+              <p className="text-lg font-bold text-black">Free</p>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-black">Total</p>
+              <p className="text-lg font-bold text-black">
+                ₹
+                {cartItems && cartItems.length
+                  ? cartItems.reduce(
+                      (total, item) => item.productID.price + total,
+                      0
+                    )
+                  : "0"}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-between">
+            <button
+              className="mt-4 mb-8 w-full rounded-md bg-black px-6 py-3 font-medium text-white"
+              onClick={() => {
+                localStorage.setItem("paymentMethod", "Stripe");
+                handleCheckout();
+              }}
+            >
+              Pay with Stripe
+            </button>
+            <button
+              className="mt-4 mb-8 w-full rounded-md bg-green-500 px-6 py-3 font-medium text-white"
+              onClick={() => {
+                localStorage.setItem("paymentMethod", "Razorpay");
+                handleCheckout();
+              }}
+            >
+              Pay with Razorpay
+            </button>
+          </div>
         </div>
       </div>
     </div>
