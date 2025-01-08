@@ -1,23 +1,19 @@
 import Cookies from "js-cookie";
 
-export const createRazorpayOrder = async (orderDetails) => {
+export const callRazorpayOrder = async (formData) => {
   try {
-    const response = await fetch("/api/razorpay", {
+    const res = await fetch("/api/razorpay", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${Cookies.get("token")}`,
       },
-      body: JSON.stringify(orderDetails),
+      body: JSON.stringify(formData),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error creating Razorpay order:", error);
-    throw error;
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    console.error(e);
   }
 };

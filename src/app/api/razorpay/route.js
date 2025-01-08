@@ -1,30 +1,43 @@
-const express = require("express");
-const Razorpay = require("razorpay");
-const router = express.Router();
+import AuthUser from "@/middleware/AuthUser";
+import { NextResponse } from "next/server";
+import Razorpay from "razorpay";
 
-// Initialize Razorpay instance
-const razorpay = new Razorpay({
-  key_id: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay Key ID
-  key_secret: "02iADMTpuOGFzwbiTO5kjVZ5", // Replace with your Razorpay Key Secret
+const razorpayInstance = new Razorpay({
+  key_id: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay key ID
+  key_secret: "YOUR_RAZORPAY_SECRET_KEY", // Replace with your Razorpay secret key
 });
 
-router.post("/razorpay", async (req, res) => {
+export const dynamic = "force-dynamic";
+
+export async function POST(req) {
   try {
-    const { amount, currency } = req.body;
+    const isAuthUser = await AuthUser(req);
+    if (isAuthUser) {
+      const { amount, currency } = await req.json();
 
-    const options = {
-      amount, // Amount in paise
-      currency,
-      receipt: `receipt_${Math.random().toString(36).substring(7)}`,
-    };
+      const order = await razorpayInstance.orders.create({
+        amount: amount * 100, // Amount in smallest currency unit (e.g., paise for INR)
+        currency: currency || "INR",
+        receipt: `receipt_${Date.now()}`,
+      });
 
-    const order = await razorpay.orders.create(options);
-
-    res.status(200).json(order);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to create Razorpay order" });
+      return NextResponse.json({
+        success: true,
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+      });
+    } else {
+      return NextResponse.json({
+        success: false,
+        message: "You are not authenticated",
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    return NextResponse.json({
+      success: false,
+      message: "Something went wrong! Please try again.",
+    });
   }
-});
-
-module.exports = router;
+}
