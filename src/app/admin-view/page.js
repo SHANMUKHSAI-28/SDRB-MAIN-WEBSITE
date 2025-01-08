@@ -3,34 +3,31 @@
 import ComponentLevelLoader from "@/components/Loader/componentlevel";
 import { GlobalContext } from "@/context";
 import { getAllOrdersForAllUsers, updateStatusOfOrder } from "@/services/order";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { PulseLoader } from "react-spinners";
 
 export default function AdminView() {
   const {
-    allOrdersForAllUsers,
-    setAllOrdersForAllUsers,
-    user,
-    pageLevelLoader,
     setPageLevelLoader,
-    componentLevelLoader,
     setComponentLevelLoader,
+    pageLevelLoader,
+    componentLevelLoader,
   } = useContext(GlobalContext);
 
-  async function extractAllOrdersForAllUsers() {
+  const [allOrdersForAllUsers, setAllOrdersForAllUsers] = useState([]);
+
+  // Fetch all orders for all users
+  async function fetchAllOrders() {
     setPageLevelLoader(true);
     try {
       const res = await getAllOrdersForAllUsers();
       console.log("API Response:", res);
 
       if (res.success) {
-        const filteredOrders = res.data && res.data.length
-          ? res.data.filter((item) => item.user._id !== user._id)
-          : [];
-        console.log("Filtered Orders:", filteredOrders);
-        setAllOrdersForAllUsers(filteredOrders);
+        setAllOrdersForAllUsers(res.data || []);
       } else {
         console.error("Failed to fetch orders:", res.message);
+        setAllOrdersForAllUsers([]);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -40,20 +37,21 @@ export default function AdminView() {
   }
 
   useEffect(() => {
-    if (user !== null) extractAllOrdersForAllUsers();
-  }, [user]);
+    fetchAllOrders();
+  }, []);
 
-  async function handleUpdateOrderStatus(getItem) {
-    setComponentLevelLoader({ loading: true, id: getItem._id });
+  // Update the status of an order
+  async function handleUpdateOrderStatus(order) {
+    setComponentLevelLoader({ loading: true, id: order._id });
     try {
       const res = await updateStatusOfOrder({
-        ...getItem,
+        ...order,
         isProcessing: false,
       });
 
       if (res.success) {
-        console.log("Order status updated:", res);
-        extractAllOrdersForAllUsers();
+        console.log("Order status updated successfully:", res);
+        fetchAllOrders(); // Refresh the orders list
       } else {
         console.error("Failed to update order status:", res.message);
       }
@@ -80,112 +78,81 @@ export default function AdminView() {
   return (
     <section>
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
-        <div>
-          <div className="px-4 py-6 sm:px-8 sm:py-10">
-            <div className="flow-root">
-              {allOrdersForAllUsers && allOrdersForAllUsers.length ? (
-                <ul className="flex flex-col gap-4">
-                  {allOrdersForAllUsers.map((item) => (
-                    <li
-                      key={item._id}
-                      className="bg-gray-200 shadow p-5 flex flex-col space-y-3 py-6 text-left"
-                    >
-                      <div className="flex">
-                        <h1 className="font-bold text-lg mb-3 flex-1">
-                          #order: {item._id}
-                        </h1>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center">
-                            <p className="mr-3 text-sm font-medium text-gray-900">
-                              User Name :
-                            </p>
-                            <p className="text-sm font-semibold text-gray-900">
-                              {item?.user?.name}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="mr-3 text-sm font-medium text-gray-900">
-                              User Email :
-                            </p>
-                            <p className="text-sm font-semibold text-gray-900">
-                              {item?.user?.email}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="mr-3 text-sm font-medium text-gray-900">
-                              Total Paid Amount :
-                            </p>
-                            <p className="text-sm font-semibold text-gray-900">
-                              ${item?.totalPrice}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="mr-3 text-sm font-medium text-gray-900">
-                              Razorpay Order ID:
-                            </p>
-                            <p className="text-sm font-semibold text-gray-900">
-                              {item?.razorpay_order_id || "N/A"}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="mr-3 text-sm font-medium text-gray-900">
-                              Razorpay Payment ID:
-                            </p>
-                            <p className="text-sm font-semibold text-gray-900">
-                              {item?.razorpay_payment_id || "N/A"}
-                            </p>
-                          </div>
+        <div className="px-4 py-6 sm:px-8 sm:py-10">
+          <div className="flow-root">
+            {allOrdersForAllUsers.length ? (
+              <ul className="flex flex-col gap-4">
+                {allOrdersForAllUsers.map((order) => (
+                  <li
+                    key={order._id}
+                    className="bg-gray-200 shadow p-5 flex flex-col space-y-3 py-6 text-left"
+                  >
+                    <div className="flex">
+                      <h1 className="font-bold text-lg mb-3 flex-1">
+                        Order ID: {order._id}
+                      </h1>
+                      <div className="flex flex-col gap-2">
+                        <p>
+                          <span className="font-medium">User Name:</span>{" "}
+                          {order.user?.name || "N/A"}
+                        </p>
+                        <p>
+                          <span className="font-medium">User Email:</span>{" "}
+                          {order.user?.email || "N/A"}
+                        </p>
+                        <p>
+                          <span className="font-medium">Total Price:</span> $
+                          {order.totalPrice}
+                        </p>
+                        <p>
+                          <span className="font-medium">Order Status:</span>{" "}
+                          {order.isProcessing ? "Processing" : "Delivered"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {order.orderItems.map((item, index) => (
+                        <div key={index} className="shrink-0">
+                          <img
+                            alt="Product"
+                            className="h-24 w-24 max-w-full rounded-lg object-cover"
+                            src={item.product?.imageUrl || "/placeholder.jpg"}
+                          />
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {item.orderItems.map((orderItem, index) => (
-                          <div key={index} className="shrink-0">
-                            <img
-                              alt="Order Item"
-                              className="h-24 w-24 max-w-full rounded-lg object-cover"
-                              src={
-                                orderItem &&
-                                orderItem.product &&
-                                orderItem.product.imageUrl
-                              }
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex gap-5">
-                        <button className="disabled:opacity-50 mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide">
-                          {item.isProcessing
-                            ? "Order is Processing"
-                            : "Order is Delivered"}
-                        </button>
-                        <button
-                          onClick={() => handleUpdateOrderStatus(item)}
-                          disabled={!item.isProcessing}
-                          className="disabled:opacity-50 mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
-                        >
-                          {componentLevelLoader &&
-                          componentLevelLoader.loading &&
-                          componentLevelLoader.id === item._id ? (
-                            <ComponentLevelLoader
-                              text={"Updating Order Status"}
-                              color={"#ffffff"}
-                              loading={
-                                componentLevelLoader &&
-                                componentLevelLoader.loading
-                              }
-                            />
-                          ) : (
-                            "Update Order Status"
-                          )}
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No orders available.</p>
-              )}
-            </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-5">
+                      <button
+                        className="disabled:opacity-50 mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
+                        disabled={!order.isProcessing}
+                      >
+                        {order.isProcessing
+                          ? "Order is Processing"
+                          : "Order Delivered"}
+                      </button>
+                      <button
+                        onClick={() => handleUpdateOrderStatus(order)}
+                        disabled={!order.isProcessing}
+                        className="disabled:opacity-50 mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
+                      >
+                        {componentLevelLoader?.loading &&
+                        componentLevelLoader.id === order._id ? (
+                          <ComponentLevelLoader
+                            text="Updating Order Status"
+                            color="#ffffff"
+                            loading={componentLevelLoader?.loading}
+                          />
+                        ) : (
+                          "Update Order Status"
+                        )}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No orders available.</p>
+            )}
           </div>
         </div>
       </div>
