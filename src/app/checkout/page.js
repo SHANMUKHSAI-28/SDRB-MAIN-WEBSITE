@@ -1,4 +1,5 @@
 "use client";
+
 import Notification from "@/components/Notification";
 import { GlobalContext } from "@/context";
 import { fetchAllAddresses } from "@/services/address";
@@ -9,6 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { toast } from "react-toastify";
+import { MapPin, ShoppingBag, Truck, Lock } from 'lucide-react';
 
 export default function Checkout() {
   const {
@@ -31,11 +33,9 @@ export default function Checkout() {
     "pk_test_51OPFRtSJA9GAEIjE6wRcmZj7YuO4g0Md53AhigtPWcLzPDQte5QeVeTZaSGlJEuV9vKMoaLjCSRg6PH1oCwcuOPR00TqPDos3Y";
   const stripePromise = loadStripe(publishableKey);
 
-  console.log(cartItems);
-
+  // Existing functions remain the same
   async function getAllAddresses() {
     const res = await fetchAllAddresses(user?._id);
-
     if (res.success) {
       setAddresses(res.data);
     }
@@ -105,7 +105,6 @@ export default function Checkout() {
         ...checkoutFormData,
         shippingAddress: {},
       });
-
       return;
     }
 
@@ -150,12 +149,9 @@ export default function Checkout() {
     console.log(error);
   }
 
-  console.log(checkoutFormData);
-
   useEffect(() => {
     if (orderSuccess) {
       setTimeout(() => {
-        // setOrderSuccess(false);
         router.push("/orders");
       }, [2000]);
     }
@@ -163,15 +159,18 @@ export default function Checkout() {
 
   if (orderSuccess) {
     return (
-      <section className="h-screen bg-gray-200">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto mt-8 max-w-screen-xl px-4 sm:px-6 lg:px-8 ">
-            <div className="bg-white shadow">
-              <div className="px-4 py-6 sm:px-8 sm:py-10 flex flex-col gap-5">
-                <h1 className="font-bold text-lg text-black">
-                  Your payment is successful and you will be redirected to the orders page in 2 seconds!
-                </h1>
-              </div>
+      <section className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto p-8 bg-white rounded-2xl shadow-lg">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Order Successful!</h1>
+            <p className="text-gray-600 mb-6">Your payment has been processed successfully.</p>
+            <div className="animate-pulse text-sm text-gray-500">
+              Redirecting to orders page...
             </div>
           </div>
         </div>
@@ -181,126 +180,145 @@ export default function Checkout() {
 
   if (isOrderProcessing) {
     return (
-      <div className="w-full min-h-screen flex justify-center items-center">
+      <div className="w-full min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-gray-50 to-white">
         <PulseLoader
           color={"#000000"}
           loading={isOrderProcessing}
-          size={30}
+          size={20}
           data-testid="loader"
         />
+        <p className="mt-4 text-gray-600">Processing your order...</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="grid sm:px-10 lg:grid-cols-2 lg:px-20 xl:px-32">
-        <div className="px-4 pt-8">
-          <p className="font-medium text-xl text-black">Cart Summary</p>
-          <div className="mt-8 space-y-3 rounded-lg border bg-white px-2 py-4 sm:px-5">
-            {cartItems && cartItems.length ? (
-              cartItems.map((item) => (
-                <div
-                  className="flex flex-col rounded-lg bg-white sm:flex-row"
-                  key={item._id}
-                >
-                  <img
-                    src={item && item.productID && item.productID.imageUrl}
-                    alt="Cart Item"
-                    className="m-2 h-24 w-28 rounded-md border object-cover object-center"
-                  />
-                  <div className="flex w-full flex-col px-4 py-4">
-                    <span className="font-bold text-black">
-                      {item && item.productID && item.productID.name}
-                    </span>
-                    <span className="font-semibold text-black">
-                      {item && item.productID && item.productID.price}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-black">Your cart is empty</div>
-            )}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <Lock className="w-4 h-4" />
+            <span>Secure Checkout</span>
           </div>
         </div>
-        <div className="mt-10 bg-gray-50 px-4 pt-8 lg:mt-0">
-          <p className="text-xl font-medium text-black">Shipping Address Details</p>
-          <p className="text-gray-400 font-bold text-black">
-            Complete your order by selecting an address below
-          </p>
-          <div className="w-full mt-6 mr-0 mb-0 ml-0 space-y-6">
-            {addresses && addresses.length ? (
-              addresses.map((item) => (
-                <div
-                  onClick={() => handleSelectedAddress(item)}
-                  key={item._id}
-                  className={`border p-6 ${
-                    item._id === selectedAddress ? "border-red-900" : ""
-                  }`}
-                >
-                  <p className="text-black">Name : {item.fullName}</p>
-                  <p className="text-black">Address : {item.address}</p>
-                  <p className="text-black">City : {item.city}</p>
-                  <p className="text-black">Country : {item.country}</p>
-                  <p className="text-black">Postal Code : {item.postalCode}</p>
-                  <button className="mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide">
-                    {item._id === selectedAddress
-                      ? "Selected Address"
-                      : "Select Address"}
-                  </button>
-                </div>
-              ))
-            ) : (
-              <p className="text-black">No addresses added</p>
-            )}
+        
+        <div className="grid lg:grid-cols-2 gap-12">
+          {/* Left Column - Cart Summary */}
+          <div className="space-y-8">
+            <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+              <div className="flex items-center space-x-2 mb-6">
+                <ShoppingBag className="w-5 h-5 text-gray-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Order Summary</h2>
+              </div>
+              <div className="space-y-4">
+                {cartItems && cartItems.length ? (
+                  cartItems.map((item) => (
+                    <div
+                      key={item._id}
+                      className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl"
+                    >
+                      <img
+                        src={item?.productID?.imageUrl}
+                        alt={item?.productID?.name}
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{item?.productID?.name}</h3>
+                        <p className="text-lg font-semibold text-gray-900 mt-1">
+                          ₹{item?.productID?.price.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8">Your cart is empty</p>
+                )}
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => router.push("/account")}
-            className="mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
-          >
-            Add New Address
-          </button>
-          <div className="mt-6 border-t border-b py-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-black">Subtotal</p>
-              <p className="text-lg font-bold text-black">
-                ₹
-                {cartItems && cartItems.length
-                  ? cartItems.reduce(
-                      (total, item) => item.productID.price + total,
-                      0
-                    )
-                  : "0"}
-              </p>
+
+          {/* Right Column - Shipping & Payment */}
+          <div className="space-y-8">
+            <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+              <div className="flex items-center space-x-2 mb-6">
+                <MapPin className="w-5 h-5 text-gray-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Shipping Address</h2>
+              </div>
+              
+              <div className="space-y-4">
+                {addresses && addresses.length ? (
+                  addresses.map((item) => (
+                    <div
+                      key={item._id}
+                      onClick={() => handleSelectedAddress(item)}
+                      className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                        item._id === selectedAddress
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-gray-900">{item.fullName}</p>
+                          <p className="text-gray-600 mt-1">{item.address}</p>
+                          <p className="text-gray-600">{item.city}, {item.country} {item.postalCode}</p>
+                        </div>
+                        {item._id === selectedAddress && (
+                          <span className="text-blue-500 text-sm font-medium">Selected</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No addresses added</p>
+                )}
+                
+                <button
+                  onClick={() => router.push("/account")}
+                  className="w-full py-3 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Add New Address
+                </button>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-black">Shipping</p>
-              <p className                ="text-lg font-bold text-black">Free</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-black">Total</p>
-              <p className="text-lg font-bold text-black">
-                ₹
-                {cartItems && cartItems.length
-                  ? cartItems.reduce(
-                      (total, item) => item.productID.price + total,
-                      0
-                    )
-                  : "0"}
-              </p>
-            </div>
-            <div className="pb-10">
-              <button
-                disabled={
-                  (cartItems && cartItems.length === 0) ||
-                  Object.keys(checkoutFormData.shippingAddress).length === 0
-                }
-                onClick={handleCheckout}
-                className="disabled:opacity-50 mt-5 mr-5 w-full inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
-              >
-                Checkout
-              </button>
+
+            {/* Order Summary & Checkout */}
+            <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+              <div className="space-y-4">
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal</span>
+                  <span>₹{cartItems?.reduce((total, item) => item.productID.price + total, 0)?.toLocaleString() || "0"}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Shipping</span>
+                  <span className="text-green-600">Free</span>
+                </div>
+                <div className="h-px bg-gray-200 my-4"></div>
+                <div className="flex justify-between text-lg font-semibold text-gray-900">
+                  <span>Total</span>
+                  <span>₹{cartItems?.reduce((total, item) => item.productID.price + total, 0)?.toLocaleString() || "0"}</span>
+                </div>
+                
+                <button
+                  onClick={handleCheckout}
+                  disabled={
+                    (cartItems && cartItems.length === 0) ||
+                    Object.keys(checkoutFormData.shippingAddress).length === 0
+                  }
+                  className="w-full mt-6 bg-black text-white py-4 px-6 rounded-xl font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Lock className="w-4 h-4" />
+                    <span>Secure Checkout</span>
+                  </div>
+                </button>
+                
+                <div className="flex items-center justify-center space-x-2 mt-4 text-sm text-gray-500">
+                  <Truck className="w-4 h-4" />
+                  <span>Free delivery within 3-5 business days</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
