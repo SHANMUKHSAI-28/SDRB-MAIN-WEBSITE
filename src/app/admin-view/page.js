@@ -19,18 +19,22 @@ export default function AdminView() {
 
   async function extractAllOrdersForAllUsers() {
     setPageLevelLoader(true);
-    const res = await getAllOrdersForAllUsers();
+    try {
+      const res = await getAllOrdersForAllUsers();
+      console.log("API Response:", res);
 
-    console.log(res);
-
-    if (res.success) {
-      setPageLevelLoader(false);
-      setAllOrdersForAllUsers(
-        res.data && res.data.length
+      if (res.success) {
+        const filteredOrders = res.data && res.data.length
           ? res.data.filter((item) => item.user._id !== user._id)
-          : []
-      );
-    } else {
+          : [];
+        console.log("Filtered Orders:", filteredOrders);
+        setAllOrdersForAllUsers(filteredOrders);
+      } else {
+        console.error("Failed to fetch orders:", res.message);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    } finally {
       setPageLevelLoader(false);
     }
   }
@@ -39,20 +43,24 @@ export default function AdminView() {
     if (user !== null) extractAllOrdersForAllUsers();
   }, [user]);
 
-  console.log(allOrdersForAllUsers);
-
   async function handleUpdateOrderStatus(getItem) {
     setComponentLevelLoader({ loading: true, id: getItem._id });
-    const res = await updateStatusOfOrder({
-      ...getItem,
-      isProcessing: false,
-    });
+    try {
+      const res = await updateStatusOfOrder({
+        ...getItem,
+        isProcessing: false,
+      });
 
-    if (res.success) {
+      if (res.success) {
+        console.log("Order status updated:", res);
+        extractAllOrdersForAllUsers();
+      } else {
+        console.error("Failed to update order status:", res.message);
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    } finally {
       setComponentLevelLoader({ loading: false, id: "" });
-      extractAllOrdersForAllUsers();
-    } else {
-      setComponentLevelLoader({ loading: true, id: "" });
     }
   }
 
@@ -91,7 +99,7 @@ export default function AdminView() {
                             <p className="mr-3 text-sm font-medium text-gray-900">
                               User Name :
                             </p>
-                            <p className="text-sm  font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-gray-900">
                               {item?.user?.name}
                             </p>
                           </div>
@@ -99,7 +107,7 @@ export default function AdminView() {
                             <p className="mr-3 text-sm font-medium text-gray-900">
                               User Email :
                             </p>
-                            <p className="text-sm  font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-gray-900">
                               {item?.user?.email}
                             </p>
                           </div>
@@ -107,8 +115,24 @@ export default function AdminView() {
                             <p className="mr-3 text-sm font-medium text-gray-900">
                               Total Paid Amount :
                             </p>
-                            <p className="text-sm  font-semibold text-gray-900">
+                            <p className="text-sm font-semibold text-gray-900">
                               ${item?.totalPrice}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="mr-3 text-sm font-medium text-gray-900">
+                              Razorpay Order ID:
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {item?.razorpay_order_id || "N/A"}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="mr-3 text-sm font-medium text-gray-900">
+                              Razorpay Payment ID:
+                            </p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {item?.razorpay_payment_id || "N/A"}
                             </p>
                           </div>
                         </div>
@@ -129,15 +153,15 @@ export default function AdminView() {
                         ))}
                       </div>
                       <div className="flex gap-5">
-                        <button className="disabled:opacity-50 mt-5 mr-5  inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide">
+                        <button className="disabled:opacity-50 mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide">
                           {item.isProcessing
                             ? "Order is Processing"
-                            : "Order is delivered"}
+                            : "Order is Delivered"}
                         </button>
                         <button
                           onClick={() => handleUpdateOrderStatus(item)}
                           disabled={!item.isProcessing}
-                          className="disabled:opacity-50 mt-5 mr-5  inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
+                          className="disabled:opacity-50 mt-5 mr-5 inline-block bg-black text-white px-5 py-3 text-xs font-medium uppercase tracking-wide"
                         >
                           {componentLevelLoader &&
                           componentLevelLoader.loading &&
@@ -158,7 +182,9 @@ export default function AdminView() {
                     </li>
                   ))}
                 </ul>
-              ) : null}
+              ) : (
+                <p>No orders available.</p>
+              )}
             </div>
           </div>
         </div>
