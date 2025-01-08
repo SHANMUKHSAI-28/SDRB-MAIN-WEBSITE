@@ -1,6 +1,6 @@
 import Cookies from "js-cookie";
 
-export const callRazorpayOrder = async (formData) => {
+export const createRazorpayOrder = async (formData) => {
   try {
     const res = await fetch("/api/razorpay", {
       method: "POST",
@@ -15,6 +15,5 @@ export const callRazorpayOrder = async (formData) => {
     return data;
   } catch (e) {
     console.log(e);
-    return { success: false };
   }
 };

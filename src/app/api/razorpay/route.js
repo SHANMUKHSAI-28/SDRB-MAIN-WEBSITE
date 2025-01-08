@@ -14,23 +14,23 @@ export async function POST(req) {
     const isAuthUser = await AuthUser(req);
     if (isAuthUser) {
       const res = await req.json();
-
-      const paymentCapture = 1;
-      const amount = res.totalPrice * 100; // Amount in paise
-      const currency = "INR";
+      
+      // Calculate total amount
+      const amount = res.reduce((total, item) => {
+        return total + (item.price_data.unit_amount / 100);
+      }, 0);
 
       const options = {
-        amount: amount,
-        currency: currency,
-        receipt: `receipt_${new Date().getTime()}`,
-        payment_capture: paymentCapture,
+        amount: amount * 100, // Razorpay expects amount in paise
+        currency: "INR",
+        receipt: `order_${Date.now()}`,
       };
 
       const order = await razorpay.orders.create(options);
 
       return NextResponse.json({
         success: true,
-        orderId: order.id,
+        order,
       });
     } else {
       return NextResponse.json({
@@ -43,7 +43,7 @@ export async function POST(req) {
     return NextResponse.json({
       status: 500,
       success: false,
-      message: "Something went wrong! Please try again.",
+      message: "Something went wrong! Please try again",
     });
   }
 }
