@@ -4,7 +4,7 @@ import Razorpay from "razorpay";
 
 const razorpayInstance = new Razorpay({
   key_id: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay key ID
-  key_secret: "YOUR_RAZORPAY_SECRET_KEY", // Replace with your Razorpay secret key
+  key_secret: "02iADMTpuOGFzwbiTO5kjVZ5", // Replace with your Razorpay secret key
 });
 
 export const dynamic = "force-dynamic";
