@@ -114,15 +114,17 @@ export default function Register() {
                     ) : null
                   )}
                   <button
-                    className="disabled:opacity-50 inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg 
-                    text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide"
-                    disabled={!isFormValid()}
+                    className={`disabled:opacity-50 inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg 
+                    text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide ${
+                      pageLevelLoader ? "cursor-wait" : ""
+                    }`}
+                    disabled={!isFormValid() || pageLevelLoader}
                     onClick={handleRegisterOnSubmit}
                   >
                     {pageLevelLoader ? (
                       <ComponentLevelLoader
-                        text={"Registering"}
-                        color={"#ffffff"}
+                        text="Registering"
+                        color="#ffffff"
                         loading={pageLevelLoader}
                       />
                     ) : (
