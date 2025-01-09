@@ -1,44 +1,65 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Star } from "lucide-react";
 
 export default function ProductTile({ item }) {
   const router = useRouter();
   
+  const discountedPrice = item.onSale === "yes" 
+    ? (item.price - (item.price * (item.priceDrop / 100))).toFixed(2)
+    : item.price;
+  
   return (
-    <div onClick={() => router.push(`/product/${item._id}`)}>
-      <div className="overflow-hidden aspect-w-1 aspect-h-1 h-52">
+    <div 
+      onClick={() => router.push(`/product/${item._id}`)}
+      className="group relative flex flex-col"
+    >
+      <div className="relative overflow-hidden rounded-lg bg-gray-100 aspect-square">
         <img
           src={item.imageUrl}
-          alt="Product image"
-          className="h-full w-full object-cover transition-all duration-300 group-hover:scale-125"
+          alt={item.name}
+          className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
         />
+        {item.onSale === "yes" && (
+          <div className="absolute top-2 left-2">
+            <div className="bg-red-500 text-white px-2 py-1 rounded-md text-xs font-medium">
+              {item.priceDrop}% OFF
+            </div>
+          </div>
+        )}
       </div>
-      {item.onSale === "yes" ? (
-        <div className="absolute top-0 m-2 rounded-full bg-black">
-          <p className="rounded-full p-1 text-[8px] font-bold uppercase tracking-wide text-white sm:py-1 sm:px-3">
-            Sale
+      
+      <div className="mt-4 space-y-2 px-2">
+        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-black">
+          {item.name}
+        </h3>
+        
+        <div className="flex items-center gap-2">
+          <div className="flex items-center bg-green-50 px-1.5 py-0.5 rounded">
+            <span className="text-sm font-medium text-green-700">4.5</span>
+            <Star className="h-3.5 w-3.5 text-green-700 fill-green-700 ml-0.5" />
+          </div>
+          <span className="text-xs text-gray-500">(210)</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <p className="text-lg font-semibold text-gray-900">
+            ₹{discountedPrice}
           </p>
+          {item.onSale === "yes" && (
+            <>
+              <p className="text-sm text-gray-500 line-through">
+                ₹{item.price}
+              </p>
+              <p className="text-sm font-medium text-green-600">
+                {item.priceDrop}% off
+              </p>
+            </>
+          )}
         </div>
-      ) : null}
-      <div className="my-4 mx-auto flex w-10/12 flex-col items-start justify-between">
-        <div className="mb-2 flex">
-          <p
-            className={`mr-3 text-sm font-semibold text-black ${
-              item.onSale === "yes" ? "line-through" : ""
-            }`}
-          >{`₹ ${item.price}`}</p>
-          {item.onSale === "yes" ? (
-            <p className="mr-3 text-sm font-semibold text-red-700">{`₹ ${(
-              item.price -
-              item.price * (item.priceDrop / 100)
-            ).toFixed(2)}`}</p>
-          ) : null}
-          {item.onSale === "yes" ? (
-            <p className="mr-3 text-sm font-semibold">{`-(${item.priceDrop}%) off`}</p>
-          ) : null}
-        </div>
-        <h3 className="md-2 text-gray-400 text-sm">{item.name}</h3>
+        
+        <p className="text-xs text-green-600 font-medium">Free Delivery</p>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { deleteAProduct } from "@/services/product";
 import { usePathname, useRouter } from "next/navigation";
 import { useContext } from "react";
 import { toast } from "react-toastify";
+import { ShoppingCart, Pencil, Trash2 } from "lucide-react";
 
 export default function ProductButton({ item }) {
   const pathName = usePathname();
@@ -15,7 +16,8 @@ export default function ProductButton({ item }) {
     setComponentLevelLoader,
     componentLevelLoader,
     user,
-    showCartModal, setShowCartModal
+    showCartModal, 
+    setShowCartModal
   } = useContext(GlobalContext);
   const router = useRouter();
 
@@ -23,7 +25,6 @@ export default function ProductButton({ item }) {
 
   async function handleDeleteProduct(item) {
     setComponentLevelLoader({ loading: true, id: item._id });
-
     const res = await deleteAProduct(item._id);
 
     if (res.success) {
@@ -42,7 +43,6 @@ export default function ProductButton({ item }) {
 
   async function handleAddToCart(getItem) {
     setComponentLevelLoader({ loading: true, id: getItem._id });
-
     const res = await addToCart({ productID: getItem._id, userID: user._id });
 
     if (res.success) {
@@ -58,56 +58,59 @@ export default function ProductButton({ item }) {
       setComponentLevelLoader({ loading: false, id: "" });
       setShowCartModal(true)
     }
-
-    console.log(res);
   }
 
   return isAdminView ? (
-    <>
+    <div className="flex gap-2 mt-4">
       <button
         onClick={() => {
           setCurrentUpdatedProduct(item);
           router.push("/admin-view/add-product");
         }}
-        className="mt-1.5 flex w-full justify-center bg-black px-5 py-3 text-xs font-medium uppercase tracking-wide text-white"
+        className="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
       >
-        Update
+        <Pencil className="h-4 w-4 mr-2" />
+        Edit
       </button>
       <button
         onClick={() => handleDeleteProduct(item)}
-        className="mt-1.5 flex w-full justify-center bg-black px-5 py-3 text-xs font-medium uppercase tracking-wide text-white"
+        className="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
       >
         {componentLevelLoader &&
         componentLevelLoader.loading &&
         item._id === componentLevelLoader.id ? (
           <ComponentLevelLoader
-            text={"Deleting Product"}
-            color={"#ffffff"}
+            text={"Deleting"}
+            color={"#EF4444"}
             loading={componentLevelLoader && componentLevelLoader.loading}
           />
         ) : (
-          "DELETE"
+          <>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </>
         )}
       </button>
-    </>
+    </div>
   ) : (
-    <>
-      <button
-        onClick={() => handleAddToCart(item)}
-        className="mt-1.5 flex w-full justify-center bg-black px-5 py-3 text-xs font-medium uppercase tracking-wide text-white"
-      >
-        {componentLevelLoader &&
-        componentLevelLoader.loading &&
-        componentLevelLoader.id === item._id ? (
-          <ComponentLevelLoader
-            text={"Adding to cart"}
-            color={"#ffffff"}
-            loading={componentLevelLoader && componentLevelLoader.loading}
-          />
-        ) : (
-          "Add To Cart"
-        )}
-      </button>
-    </>
+    <button
+      onClick={() => handleAddToCart(item)}
+      className="w-full mt-4 inline-flex justify-center items-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+    >
+      {componentLevelLoader &&
+      componentLevelLoader.loading &&
+      componentLevelLoader.id === item._id ? (
+        <ComponentLevelLoader
+          text={"Adding to cart"}
+          color={"#ffffff"}
+          loading={componentLevelLoader && componentLevelLoader.loading}
+        />
+      ) : (
+        <>
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Add to Cart
+        </>
+      )}
+    </button>
   );
 }
