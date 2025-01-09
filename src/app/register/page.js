@@ -10,6 +10,7 @@ import { registrationFormControls } from "@/utils";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { UserPlus } from "lucide-react";
 
 const initialFormData = {
   name: "",
@@ -63,77 +64,92 @@ export default function Register() {
   }, [isAuthUser]);
 
   return (
-    <div className="bg-white relative">
-      <div className="flex flex-col items-center justify-between pt-0 pr-10 pb-0 pl-10 mt-8 mr-auto xl:px-5 lg:flex-row">
-        <div className="flex flex-col justify-center items-center w-full pr-10 pl-10 lg:flex-row">
-          <div className="w-full mt-10 mr-0 mb-0 ml-0 relative max-w-2xl lg:mt-0 lg:w-5/12">
-            <div className="flex flex-col items-center justify-start pt-10 pr-10 pb-10 pl-10 bg-white shadow-2xl rounded-xl relative z-10">
-              <p className="w-full text-4xl font-medium text-center font-serif">
-                {isRegistered
-                  ? "Registration Successful!"
-                  : "Sign up for an account"}
-              </p>
-              {isRegistered ? (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="container mx-auto px-4 py-16">
+        <div className="flex justify-center">
+          <div className="w-full max-w-md">
+            {isRegistered ? (
+              <div className="bg-white rounded-2xl shadow-2xl p-8 text-center space-y-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <UserPlus className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-3xl font-semibold text-gray-900">Welcome!</h2>
+                <p className="text-gray-600">Your account has been created successfully.</p>
                 <button
-                  className="inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg 
-                  text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide"
                   onClick={() => router.push("/login")}
+                  className="w-full bg-black hover:bg-gray-900 text-white rounded-lg px-6 py-4 text-sm font-medium transition-all duration-200 ease-in-out hover:shadow-lg"
                 >
-                  Login
+                  Continue to Login
                 </button>
-              ) : (
-                <div className="w-full mt-6 mr-0 mb-0 ml-0 relative space-y-8">
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-8">
+                <div className="text-center">
+                  <h2 className="text-3xl font-semibold text-gray-900">Create Account</h2>
+                  <p className="mt-2 text-gray-600">Join our community today</p>
+                </div>
+                <div className="space-y-6">
                   {registrationFormControls.map((controlItem) =>
                     controlItem.componentType === "input" ? (
-                      <InputComponent
-                        key={controlItem.id}
-                        type={controlItem.type}
-                        placeholder={controlItem.placeholder}
-                        label={controlItem.label}
-                        onChange={(event) => {
-                          setFormData({
-                            ...formData,
-                            [controlItem.id]: event.target.value,
-                          });
-                        }}
-                        value={formData[controlItem.id]}
-                      />
+                      <div key={controlItem.id} className="space-y-2">
+                        <InputComponent
+                          type={controlItem.type}
+                          placeholder={controlItem.placeholder}
+                          label={controlItem.label}
+                          onChange={(event) => {
+                            setFormData({
+                              ...formData,
+                              [controlItem.id]: event.target.value,
+                            });
+                          }}
+                          value={formData[controlItem.id]}
+                        />
+                      </div>
                     ) : controlItem.componentType === "select" ? (
-                      <SelectComponent
-                        key={controlItem.id}
-                        options={controlItem.options}
-                        label={controlItem.label}
-                        onChange={(event) => {
-                          setFormData({
-                            ...formData,
-                            [controlItem.id]: event.target.value,
-                          });
-                        }}
-                        value={formData[controlItem.id]}
-                      />
+                      <div key={controlItem.id} className="space-y-2">
+                        <SelectComponent
+                          options={controlItem.options}
+                          label={controlItem.label}
+                          onChange={(event) => {
+                            setFormData({
+                              ...formData,
+                              [controlItem.id]: event.target.value,
+                            });
+                          }}
+                          value={formData[controlItem.id]}
+                        />
+                      </div>
                     ) : null
                   )}
                   <button
-                    className={`disabled:opacity-50 inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg 
-                    text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide ${
-                      pageLevelLoader ? "cursor-wait" : ""
-                    }`}
+                    className={`w-full bg-black hover:bg-gray-900 text-white rounded-lg px-6 py-4 text-sm font-medium 
+                    transition-all duration-200 ease-in-out hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed
+                    ${pageLevelLoader ? "cursor-wait" : ""}`}
                     disabled={!isFormValid() || pageLevelLoader}
                     onClick={handleRegisterOnSubmit}
                   >
                     {pageLevelLoader ? (
                       <ComponentLevelLoader
-                        text="Registering"
+                        text="Creating your account..."
                         color="#ffffff"
                         loading={pageLevelLoader}
                       />
                     ) : (
-                      "Register"
+                      "Create Account"
                     )}
                   </button>
+                  <p className="text-center text-sm text-gray-600">
+                    Already have an account?{" "}
+                    <button
+                      onClick={() => router.push("/login")}
+                      className="text-black hover:underline font-medium"
+                    >
+                      Sign in
+                    </button>
+                  </p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
