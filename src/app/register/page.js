@@ -21,46 +21,41 @@ const initialFormData = {
 export default function Register() {
   const [formData, setFormData] = useState(initialFormData);
   const [isRegistered, setIsRegistered] = useState(false);
-  const { pageLevelLoader, setPageLevelLoader , isAuthUser } = useContext(GlobalContext);
+  const { pageLevelLoader, setPageLevelLoader, isAuthUser } =
+    useContext(GlobalContext);
 
-  const router = useRouter()
-
-  console.log(formData);
+  const router = useRouter();
 
   function isFormValid() {
-    return formData &&
-      formData.name &&
+    return (
       formData.name.trim() !== "" &&
-      formData.email &&
       formData.email.trim() !== "" &&
-      formData.password &&
       formData.password.trim() !== ""
-      ? true
-      : false;
+    );
   }
-
-  console.log(isFormValid());
 
   async function handleRegisterOnSubmit() {
     setPageLevelLoader(true);
-    const data = await registerNewUser(formData);
-
-    if (data.success) {
-      toast.success(data.message, {
+    try {
+      const data = await registerNewUser(formData);
+      if (data.success) {
+        toast.success(data.message, {
+          position: toast.POSITION.TOP_RIGHT,
+        });
+        setIsRegistered(true);
+        setFormData(initialFormData);
+      } else {
+        toast.error(data.message, {
+          position: toast.POSITION.TOP_RIGHT,
+        });
+      }
+    } catch (error) {
+      toast.error("Registration failed. Please try again.", {
         position: toast.POSITION.TOP_RIGHT,
       });
-      setIsRegistered(true);
+    } finally {
       setPageLevelLoader(false);
-      setFormData(initialFormData);
-    } else {
-      toast.error(data.message, {
-        position: toast.POSITION.TOP_RIGHT,
-      });
-      setPageLevelLoader(false);
-      setFormData(initialFormData);
     }
-
-    console.log(data);
   }
 
   useEffect(() => {
@@ -75,15 +70,14 @@ export default function Register() {
             <div className="flex flex-col items-center justify-start pt-10 pr-10 pb-10 pl-10 bg-white shadow-2xl rounded-xl relative z-10">
               <p className="w-full text-4xl font-medium text-center font-serif">
                 {isRegistered
-                  ? "Registration Successfull !"
+                  ? "Registration Successful!"
                   : "Sign up for an account"}
               </p>
               {isRegistered ? (
                 <button
                   className="inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg 
-                text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide
-                "
-                onClick={()=>router.push('/login')}
+                  text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide"
+                  onClick={() => router.push("/login")}
                 >
                   Login
                 </button>
@@ -92,6 +86,7 @@ export default function Register() {
                   {registrationFormControls.map((controlItem) =>
                     controlItem.componentType === "input" ? (
                       <InputComponent
+                        key={controlItem.id}
                         type={controlItem.type}
                         placeholder={controlItem.placeholder}
                         label={controlItem.label}
@@ -105,6 +100,7 @@ export default function Register() {
                       />
                     ) : controlItem.componentType === "select" ? (
                       <SelectComponent
+                        key={controlItem.id}
                         options={controlItem.options}
                         label={controlItem.label}
                         onChange={(event) => {
@@ -118,9 +114,8 @@ export default function Register() {
                     ) : null
                   )}
                   <button
-                    className=" disabled:opacity-50 inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg 
-                   text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide
-                   "
+                    className="disabled:opacity-50 inline-flex w-full items-center justify-center bg-black px-6 py-4 text-lg 
+                    text-white transition-all duration-200 ease-in-out focus:shadow font-medium uppercase tracking-wide"
                     disabled={!isFormValid()}
                     onClick={handleRegisterOnSubmit}
                   >
