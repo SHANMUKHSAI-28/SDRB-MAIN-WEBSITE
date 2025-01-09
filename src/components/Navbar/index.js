@@ -7,7 +7,7 @@ import CommonModal from "../CommonModal";
 import Cookies from "js-cookie";
 import { usePathname, useRouter } from "next/navigation";
 import CartModal from "../CartModal";
-import { ShoppingCart, User, LogOut, Settings, Menu } from "lucide-react";
+import { ShoppingCart, User, LogOut, Settings, Menu, ChevronDown } from "lucide-react";
 
 function NavItems({ isModalView = false, isAdminView, router }) {
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -34,9 +34,9 @@ function NavItems({ isModalView = false, isAdminView, router }) {
               </li>
             ))
           : navOptions.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="relative">
                 <button
-                  className="nav-item"
+                  className="nav-item inline-flex items-center"
                   onClick={() => {
                     if (item.submenu) {
                       setActiveDropdown(activeDropdown === item.id ? null : item.id);
@@ -46,11 +46,20 @@ function NavItems({ isModalView = false, isAdminView, router }) {
                         : (window.location.href = item.path);
                     }
                   }}
+                  onMouseEnter={() => item.submenu && setActiveDropdown(item.id)}
+                  onMouseLeave={() => item.submenu && setActiveDropdown(null)}
                 >
                   {item.label}
+                  {item.submenu && (
+                    <ChevronDown className="ml-1 h-4 w-4" />
+                  )}
                 </button>
                 {item.submenu && (
-                  <div className={`dropdown-menu ${activeDropdown === item.id ? 'show' : ''}`}>
+                  <div 
+                    className={`dropdown-menu ${activeDropdown === item.id ? 'show' : ''}`}
+                    onMouseEnter={() => setActiveDropdown(item.id)}
+                    onMouseLeave={() => setActiveDropdown(null)}
+                  >
                     {item.submenu.map((subItem) => (
                       <button
                         key={subItem.id}
