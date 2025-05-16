@@ -101,33 +101,33 @@ export default function Checkout() {
         currency: res.order.currency,
         name: "Your Store Name",
         description: "Purchase Description",
-        order_id: res.order.id,
-        handler: async function (response) {
-          try {          const orderData = {
-            user: user?._id,
-            shippingAddress: checkoutFormData.shippingAddress,
-            orderItems: cartItems.map((item) => ({
-              qty: 1,
-              product: item.productID,
-            })),
-            paymentMethod: "Razorpay",
-            totalPrice: cartItems.reduce((total, item) => item.productID.price + total, 0) - couponDiscount,
-            coupon: appliedCoupon ? {
-              code: appliedCoupon.coupon_code,
-              discountAmount: couponDiscount,
-            } : undefined,
-            isPaid: true,
-            isProcessing: true,
-            paidAt: new Date(),
-            razorpay: {
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            },
-          };            const orderRes = await createNewOrder(orderData);
-
-            if (orderRes.success) {
-              // If there's an applied coupon, redeem it              if (appliedCoupon && appliedCoupon.coupon_code) {
+        order_id: res.order.id,        handler: async function (response) {
+          try {
+            const orderData = {
+              user: user?._id,
+              shippingAddress: checkoutFormData.shippingAddress,
+              orderItems: cartItems.map((item) => ({
+                qty: 1,
+                product: item.productID,
+              })),
+              paymentMethod: "Razorpay",
+              totalPrice: cartItems.reduce((total, item) => item.productID.price + total, 0) - couponDiscount,
+              coupon: appliedCoupon ? {
+                code: appliedCoupon.coupon_code,
+                discountAmount: couponDiscount,
+              } : undefined,
+              isPaid: true,
+              isProcessing: true,
+              paidAt: new Date(),
+              razorpay: {
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+              },
+            };
+            const orderRes = await createNewOrder(orderData);            if (orderRes.success) {
+              // If there's an applied coupon, redeem it
+              if (appliedCoupon && appliedCoupon.coupon_code) {
                 try {
                   // Validate coupon again before redeeming to ensure it's still valid
                   const validationResponse = await fetch('https://www.sdrbtechnologies.com/api/coupon/validate-coupon', {
