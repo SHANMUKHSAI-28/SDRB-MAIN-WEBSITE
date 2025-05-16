@@ -98,20 +98,19 @@ export default function Checkout() {
       const options = {
         key: "rzp_test_YNiLz4wMTURtjU", // Replace with your Razorpay key ID
         amount: res.order.amount,
-        currency: res.order.currency,
-        name: "Your Store Name",
+        currency: res.order.currency,        name: "SDRB Technologies",
         description: "Purchase Description",
-        order_id: res.order.id,        handler: async function (response) {
+        order_id: res.order.id,
+        handler: async function (response) {
           try {
             const orderData = {
               user: user?._id,
-              shippingAddress: checkoutFormData.shippingAddress,
-              orderItems: cartItems.map((item) => ({
-                qty: 1,
+              shippingAddress: checkoutFormData.shippingAddress,              orderItems: cartItems.map((item) => ({
+                qty: item.quantity || 1,
                 product: item.productID,
               })),
               paymentMethod: "Razorpay",
-              totalPrice: cartItems.reduce((total, item) => item.productID.price + total, 0) - couponDiscount,
+              totalPrice: cartItems.reduce((total, item) => item.productID.price + total, 0) - (couponDiscount || 0),
               coupon: appliedCoupon ? {
                 code: appliedCoupon.coupon_code,
                 discountAmount: couponDiscount,
