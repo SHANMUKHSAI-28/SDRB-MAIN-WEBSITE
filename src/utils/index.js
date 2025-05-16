@@ -36,13 +36,16 @@ export const adminNavOptions = [
     id: "adminManageInternships",
     label: "Manage Internships",
     path: "/admin-view/internships",
-  },
-  {
+  },  {
     id: "adminAddInternships",
     label: "Add Internships",
     path: "/admin-view/add-internship",
   },
-
+  {
+    id: "adminCoupons",
+    label: "Manage Coupons",
+    path: "/admin-view/coupons",
+  },
 ];
 export const registrationFormControls = [
   {
@@ -226,3 +229,45 @@ export const addNewAddressFormControls = [
     componentType: "input",
   },
 ];
+
+export const validateCouponData = (couponCode, user, cartItems) => {
+  const errors = [];
+
+  if (!couponCode) {
+    errors.push('Please enter a coupon code');
+  }
+
+  if (!cartItems?.length) {
+    errors.push('Your cart is empty');
+  }
+
+  if (!user?._id) {
+    errors.push('You must be logged in to use coupons');
+  }
+
+  const orderValue = cartItems?.reduce((total, item) => item.productID.price + total, 0) || 0;
+  if (orderValue <= 0) {
+    errors.push('Invalid order value');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    orderValue,
+    productCategory: cartItems?.[0]?.productID?.category || 'SMARTSWITCH',
+    products: cartItems?.map(item => item.productID._id) || []
+  };
+};
+
+export const calculateCouponDiscount = (discountType, discountValue, orderValue) => {
+  switch (discountType) {
+    case 'PERCENTAGE':
+      return Math.min((orderValue * discountValue) / 100, orderValue);
+    case 'FIXED':
+      return Math.min(discountValue, orderValue);
+    case 'FREE_SHIPPING':
+      return 0; // Handle free shipping if you have shipping costs
+    default:
+      return 0;
+  }
+};

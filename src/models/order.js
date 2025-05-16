@@ -24,9 +24,14 @@ const OrderSchema = new mongoose.Schema(
       city: { type: String, required: true },
       country: { type: String, required: true },
       postalCode: { type: String, required: true },
+    },    paymentMethod: { type: String, required: true, default: "Stripe" },
+    coupon: {
+      code: { type: String },
+      discountAmount: { type: Number },
+      discountType: { type: String, enum: ["PERCENTAGE", "FIXED", "FREE_SHIPPING"] }
     },
-    paymentMethod: { type: String, required: true, default: "Stripe" },
-    totalPrice: { type: Number, required: true },
+    subtotal: { type: Number, required: true },
+    totalPrice: { type: Number, required: true }, // After coupon discount
     isPaid: { type: Boolean, required: true },
     paidAt: { type: Date, required: true },
     isProcessing: { type: Boolean, required: true },

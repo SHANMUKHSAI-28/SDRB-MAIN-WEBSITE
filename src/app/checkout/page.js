@@ -5,12 +5,17 @@ import { GlobalContext } from "@/context";
 import { fetchAllAddresses } from "@/services/address";
 import { createNewOrder } from "@/services/order";
 import { createRazorpayOrder } from "@/services/razorpay";
+import { validateCoupon, redeemCoupon } from "@/services/coupon";
+import { validateCouponData, calculateCouponDiscount } from "@/utils";
+import { handleCouponValidation, handleCouponRedemption } from "@/services/coupon";
+import { validateCoupon, calculateDiscount } from "@/utils/validation";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 import { PulseLoader } from "react-spinners";
 import { toast } from "react-toastify";
 import { MapPin, ShoppingBag, Truck, Lock } from 'lucide-react';
 import Script from 'next/script';
+import Cookies from "js-cookie";
 
 export default function Checkout() {
   const {
@@ -25,6 +30,9 @@ export default function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isOrderProcessing, setIsOrderProcessing] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   const router = useRouter();
 
@@ -95,32 +103,79 @@ export default function Checkout() {
         description: "Purchase Description",
         order_id: res.order.id,
         handler: async function (response) {
-          try {
-            const orderData = {
-              user: user?._id,
-              shippingAddress: checkoutFormData.shippingAddress,
-              orderItems: cartItems.map((item) => ({
-                qty: 1,
-                product: item.productID,
-              })),
-              paymentMethod: "Razorpay",
-              totalPrice: cartItems.reduce(
-                (total, item) => item.productID.price + total,
-                0
-              ),
-              isPaid: true,
-              isProcessing: true,
-              paidAt: new Date(),
-              razorpay: {
-                orderId: response.razorpay_order_id,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
-              },
-            };
-
-            const orderRes = await createNewOrder(orderData);
+          try {          const orderData = {
+            user: user?._id,
+            shippingAddress: checkoutFormData.shippingAddress,
+            orderItems: cartItems.map((item) => ({
+              qty: 1,
+              product: item.productID,
+            })),
+            paymentMethod: "Razorpay",
+            totalPrice: cartItems.reduce((total, item) => item.productID.price + total, 0) - couponDiscount,
+            coupon: appliedCoupon ? {
+              code: appliedCoupon.coupon_code,
+              discountAmount: couponDiscount,
+            } : undefined,
+            isPaid: true,
+            isProcessing: true,
+            paidAt: new Date(),
+            razorpay: {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            },
+          };            const orderRes = await createNewOrder(orderData);
 
             if (orderRes.success) {
+              // If there's an applied coupon, redeem it              if (appliedCoupon && appliedCoupon.coupon_code) {
+                try {
+                  // Validate coupon again before redeeming to ensure it's still valid
+                  const validationResponse = await fetch('https://www.sdrbtechnologies.com/api/coupon/validate-coupon', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${Cookies.get("token")}`,
+                    },
+                    body: JSON.stringify({
+                      coupon_code: appliedCoupon.coupon_code,
+                      user_id: user?._id,
+                      order_value: orderData.totalPrice + couponDiscount,
+                      product_category: cartItems[0]?.productID?.category || 'SMARTSWITCH',
+                      products: cartItems.map(item => item.productID._id),
+                    }),
+                  });
+                  
+                  const validationData = await validationResponse.json();
+                  if (!validationData.is_valid) {
+                    toast.error('Coupon is no longer valid: ' + validationData.message);
+                    return;
+                  }
+
+                  const redeemResponse = await fetch('https://www.sdrbtechnologies.com/api/coupon/redeem-coupon', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${Cookies.get("token")}`,
+                    },
+                    body: JSON.stringify({
+                      coupon_code: appliedCoupon.coupon_code,
+                      user_id: user?._id,
+                      order_id: orderRes.data._id,
+                      order_value: cartItems.reduce((total, item) => item.productID.price + total, 0),
+                      product_category: 'SMARTSWITCH', // You may need to adjust this based on your products
+                      products: cartItems.map(item => item.productID._id),
+                    }),
+                  });
+                  
+                  const redeemData = await redeemResponse.json();
+                  if (!redeemData.is_redeemed) {
+                    console.warn('Coupon redemption failed:', redeemData.message);
+                  }
+                } catch (error) {
+                  console.error('Error redeeming coupon:', error);
+                }
+              }
+              
               setOrderSuccess(true);
               toast.success(orderRes.message);
             } else {
@@ -148,6 +203,32 @@ export default function Checkout() {
       console.error(error);
       toast.error("Something went wrong");
       setIsOrderProcessing(false);
+    }
+  }
+
+  async function handleCouponApply() {
+    const validation = validateCouponData(couponCode, user, cartItems);
+    
+    if (!validation.isValid) {
+      validation.errors.forEach(error => toast.error(error));
+      return;
+    }
+
+    const result = await validateCoupon(couponCode, user, cartItems);
+    
+    if (result.success) {
+      const discount = calculateCouponDiscount(
+        result.data.discount_type, 
+        result.data.discount_value, 
+        validation.orderValue
+      );
+      setCouponDiscount(discount);
+      setAppliedCoupon(result.data);
+      toast.success('Coupon applied successfully!');
+    } else {
+      setCouponDiscount(0);
+      setAppliedCoupon(null);
+      toast.error(result.message || 'Invalid coupon code');
     }
   }
 
@@ -297,14 +378,43 @@ export default function Checkout() {
                     <span>Subtotal</span>
                     <span>₹{cartItems?.reduce((total, item) => item.productID.price + total, 0)?.toLocaleString() || "0"}</span>
                   </div>
+                  <div className="space-y-4 mb-6">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Enter coupon code"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                      <button
+                        onClick={handleCouponApply}
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                        disabled={!couponCode}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    {appliedCoupon && (
+                      <div className="text-sm text-green-600">
+                        Coupon applied: {appliedCoupon.description}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
                     <span className="text-green-600">Free</span>
                   </div>
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-gray-600">
+                      <span>Discount</span>
+                      <span className="text-green-600">-₹{couponDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="h-px bg-gray-200 my-4"></div>
                   <div className="flex justify-between text-lg font-semibold text-gray-900">
                     <span>Total</span>
-                    <span>₹{cartItems?.reduce((total, item) => item.productID.price + total, 0)?.toLocaleString() || "0"}</span>
+                    <span>₹{(cartItems?.reduce((total, item) => item.productID.price + total, 0) - couponDiscount)?.toLocaleString() || "0"}</span>
                   </div>
                   
                   <button
