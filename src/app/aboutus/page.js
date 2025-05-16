@@ -59,7 +59,7 @@ export default function AboutUs() {
             className="text-center max-w-4xl mx-auto"
           >
             <h1 className="text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-              About SDRB Technologies
+              About SDRB Technologies:
             </h1>
             <p className="text-xl text-muted-foreground">
               Pioneering smart automation solutions for a connected future.
